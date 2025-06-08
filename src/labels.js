@@ -203,10 +203,144 @@ export const labels = {
       translation: "Translation failed: "
     }
   },
+  apiExplorer: {
+    tabs: {
+      models: "Models",
+      context: "Context",
+      generate: "Generate",
+      translate: "Translate",
+      conjugate: "Conjugate",
+      query: "Query"
+    },
+    labels: {
+      contextType: "Context Type",
+      prompt: "Prompt",
+      textToTranslate: "Text to Translate",
+      targetLanguage: "Target Language",
+      verb: "Verb",
+      tense: "Tense",
+      query: "Query",
+      response: "Response"
+    },
+    languages: {
+      spanish: "Spanish",
+      english: "English"
+    },
+    tenses: {
+      present: "Present",
+      preterite: "Preterite",
+      imperfect: "Imperfect",
+      future: "Future",
+      conditional: "Conditional",
+      subjunctive: "Subjunctive"
+    },
+    errors: {
+      unknownEndpoint: "Unknown endpoint"
+    },
+    simulatedResponses: {
+      models: {
+        object: "list",
+        data: [
+          {
+            id: "spanish-learning-model",
+            object: "model",
+            created: 1669599635,
+            owned_by: "spanish-mcp",
+            capabilities: ["context-aware-translation", "grammar-analysis", "conjugation"],
+            context_window: 4096,
+            description: "Specialized model for Spanish language learning with enhanced context awareness"
+          }
+        ]
+      },
+      context: {
+        object: "context",
+        content: "# Spanish Vocabulary\n\n## Greetings\n\n### hello\n- **Translation:** hola\n- **Pronunciation:** OH-lah\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: Hola, ¿cómo estás?\n  English: Hello, how are you?\n\n### goodbye\n- **Translation:** adiós\n- **Pronunciation:** ah-DYOHS\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: Adiós, hasta mañana.\n  English: Goodbye, see you tomorrow.",
+        metadata: {
+          type: "mixed",
+          source: "spanish-learning-mcp",
+          token_count: 156,
+          categories: ["greetings"],
+          difficulty_level: "beginner"
+        }
+      },
+      generate: {
+        object: "generation",
+        model: "spanish-learning-model",
+        choices: [
+          {
+            text: "Me gustaría pedir un café, por favor.",
+            finish_reason: "stop"
+          }
+        ],
+        usage: {
+          prompt_tokens: 180,
+          completion_tokens: 8,
+          total_tokens: 188
+        }
+      },
+      translate: {
+        object: "translation",
+        source_language: "english",
+        target_language: "spanish",
+        original_text: "Hello, how are you?",
+        translated_text: "Hola, ¿cómo estás?",
+        confidence: 0.95,
+        alternatives: ["¿Cómo te va?", "¿Qué tal?"],
+        context: {
+          type: "greeting",
+          formality: "casual"
+        }
+      },
+      conjugate: {
+        object: "conjugation",
+        verb: "hablar",
+        tense: "present",
+        conjugations: {
+          "yo": "hablo",
+          "tú": "hablas",
+          "él/ella/usted": "habla",
+          "nosotros": "hablamos",
+          "vosotros": "habláis",
+          "ellos/ellas/ustedes": "hablan"
+        },
+        examples: [
+          {
+            form: "hablo",
+            sentence: "Yo hablo español.",
+            translation: "I speak Spanish."
+          }
+        ]
+      },
+      query: {
+        object: "query_response",
+        question: "What is the difference between ser and estar?",
+        answer: "Both 'ser' and 'estar' mean 'to be' in English, but they are used in different contexts. 'Ser' is used for permanent characteristics, identity, and essence, while 'estar' is used for temporary states, locations, and conditions.",
+        examples: [
+          {
+            verb: "ser",
+            sentence: "Ella es doctora.",
+            translation: "She is a doctor.",
+            explanation: "Permanent profession"
+          },
+          {
+            verb: "estar",
+            sentence: "Ella está cansada.",
+            translation: "She is tired.",
+            explanation: "Temporary state"
+          }
+        ]
+      }
+    }
+  },
   contextVisualizer: {
     categories: {
       vocabulary: ["greeting", "verb", "noun", "adjective", "adverb", "preposition", "food", "travel", "family"],
-      grammar: ["verb_tense", "conjugation", "adjectives", "verb_usage", "verb_form", "pronouns"]
+      grammar: ["verb_tense", "conjugation", "adjectives", "verb_usage", "verb_form", "pronouns"],
+      mixed: ["greeting", "verb", "noun", "adjective", "food", "travel", "family", "verb_tense", "conjugation"],
+      conversation: ["greeting", "restaurant", "shopping", "travel", "introduction", "asking_directions"],
+      exercise: ["fill_blank", "multiple_choice", "translation", "listening", "speaking"],
+      assessment: ["vocabulary_test", "grammar_test", "listening_test", "speaking_test"],
+      personalized: ["weak_areas", "review_items", "next_level_prep"]
     },
     difficultyLevels: ["beginner", "intermediate", "advanced"],
     colors: {
@@ -219,6 +353,8 @@ export const labels = {
       assessment: "#795548"
     },
     labels: {
+      headerTitle: "Context Generation Demo",
+      headerDescription: "This demo shows how the MCP server generates adaptive context for Spanish learning. The context is used to enhance AI model responses with relevant vocabulary, grammar, and learning materials.",
       configuration: "Context Configuration",
       contextType: "Context Type",
       difficultyLevel: "Difficulty Level",
@@ -226,18 +362,71 @@ export const labels = {
       categoriesPlaceholder: "Select categories",
       maxItems: "Max Items",
       generateButton: "Generate Context",
+      generateButtonActive: "Generate Context",
       metrics: "Context Metrics",
       tokenCount: "Token Count",
       generationTime: "Generation Time",
       cacheStatus: "Cache Status",
+      cacheHit: "Hit",
+      cacheMiss: "Miss",
       sections: "Sections",
       visualization: "Context Visualization",
+      outputTitle: "Generated Context",
       jsonView: "Toggle JSON View",
       generating: "Generating Context...",
       configurePrompt: "Configure and generate context to visualize how MCP works",
       contextTypeLabel: "Context Type:",
       noCategories: "No categories selected",
-      composition: "Context Composition:"
+      composition: "Context Composition:",
+      compositionTitle: "Content Breakdown",
+      compositionDescription: "This shows how the context is structured and what percentage each section contributes.",
+      compositionChip: "Analysis",
+      loadingTitle: "Generating Context",
+      loadingDescription: "The MCP server is processing your request and generating relevant learning context...",
+      loadingNote: "Real-world MCP servers can cache context for faster retrieval and better performance.",
+      badges: {
+        dynamicContent: "Dynamic Content",
+        contextAware: "Context-Aware",
+        realTime: "Real-Time",
+        configurable: "Configurable"
+      },
+      steps: {
+        step1: "Configure",
+        step2: "Generate",
+        step3: "Analyze"
+      },
+      configurationAlert: {
+        title: "What This Does:",
+        description: "This configuration determines what type of Spanish learning context will be generated. Different settings create context optimized for various learning scenarios."
+      },
+      metricsAlert: {
+        title: "Performance Metrics:",
+        description: "These metrics show the efficiency of context generation and help optimize the learning experience."
+      },
+      processExplanation: {
+        title: "What's happening:",
+        steps: [
+          "Analyzing your learning preferences and level",
+          "Selecting relevant vocabulary and grammar rules",
+          "Generating contextual examples and usage patterns",
+          "Optimizing content structure for AI model consumption"
+        ]
+      },
+      emptyState: {
+        title: "No Context Generated Yet",
+        description: "Click the 'Generate Context' button to see how the MCP server creates learning-specific context.",
+        previewTitle: "What you'll see:",
+        previewItems: [
+          "Structured vocabulary with translations and examples",
+          "Grammar rules relevant to your selected difficulty",
+          "Contextual usage patterns and common phrases",
+          "Metadata about content complexity and categories"
+        ]
+      },
+      successAlert: {
+        title: "Context Generated Successfully!",
+        description: "The content below shows the structured context that would be provided to an AI model for enhanced Spanish learning responses."
+      }
     }
   },
   mcpFlow: {
