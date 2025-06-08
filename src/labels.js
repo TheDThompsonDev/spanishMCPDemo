@@ -121,7 +121,7 @@ export const labels = {
     title: "Context Types",
     subtitle: "The Spanish Learning MCP server supports multiple context types specifically designed for language learning.",
     types: [
-      { name: "vocabulary", color: "#4caf50", description: "Spanish vocabulary with translations and examples" },
+      { name: "vocabulary", color: "#4caf50", description: "Vocabulary and translations with examples" },
       { name: "grammar", color: "#2196f3", description: "Spanish grammar rules and usage" },
       { name: "mixed", color: "#ff9800", description: "Combined vocabulary and grammar" },
       { name: "conversation", color: "#9c27b0", description: "Conversational phrases and patterns" },
