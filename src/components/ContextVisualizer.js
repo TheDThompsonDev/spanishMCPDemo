@@ -14,53 +14,25 @@ import {
   Card,
   CardContent,
   Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Alert,
   LinearProgress,
   TextField,
   IconButton,
   Tooltip,
-  Badge,
-  Stack,
   Slider,
   Autocomplete
 } from '@mui/material';
 import {
-  ExpandMore,
   Refresh,
   Cached,
-  Warning,
   Layers,
   DataUsage,
-  Category,
-  School,
   Speed,
   Code,
-  Storage
 } from '@mui/icons-material';
 import axios from 'axios';
-import ReactJson from 'react-json-view';
-
-// Sample category options
-const CATEGORIES = {
-  vocabulary: ['greeting', 'verb', 'noun', 'adjective', 'adverb', 'preposition', 'food', 'travel', 'family'],
-  grammar: ['verb_tense', 'conjugation', 'adjectives', 'verb_usage', 'verb_form', 'pronouns']
-};
-
-const DIFFICULTY_LEVELS = ['beginner', 'intermediate', 'advanced'];
-
-// Visualization colors
-const CONTEXT_COLORS = {
-  vocabulary: '#4caf50',
-  grammar: '#2196f3',
-  conversation: '#9c27b0',
-  mixed: '#ff9800',
-  personalized: '#f44336',
-  exercise: '#8bc34a',
-  assessment: '#795548'
-};
+import JsonView from '@uiw/react-json-view';
+import { labels } from '../labels';
 
 const ContextVisualizer = ({ userId, sessionId }) => {
   const [contextType, setContextType] = useState('mixed');
@@ -70,46 +42,35 @@ const ContextVisualizer = ({ userId, sessionId }) => {
   const [loading, setLoading] = useState(false);
   const [context, setContext] = useState(null);
   const [cachedStatus, setCachedStatus] = useState(false);
-  const [cacheTTL, setCacheTTL] = useState(null);
   const [contextTokenCount, setContextTokenCount] = useState(0);
   const [showJsonView, setShowJsonView] = useState(false);
   const [contextParts, setContextParts] = useState({});
   const [generationTime, setGenerationTime] = useState(0);
-  const [parsingContext, setParsingContext] = useState(false);
-  const [highlightedSection, setHighlightedSection] = useState(null);
   const [availableCategories, setAvailableCategories] = useState([]);
 
-  // Update available categories when context type changes
   useEffect(() => {
-    if (contextType in CATEGORIES) {
-      setAvailableCategories(CATEGORIES[contextType]);
+    if (contextType in labels.contextVisualizer.categories) {
+      setAvailableCategories(labels.contextVisualizer.categories[contextType]);
     } else {
       setAvailableCategories([]);
     }
-    // Reset selected categories when type changes
     setCategories([]);
   }, [contextType]);
 
-  // Helper to parse the context into sections
   const parseContextIntoSections = (content) => {
     if (!content) return {};
     
-    setParsingContext(true);
     
     try {
-      // Simplified parser for demonstration purposes
-      // A real implementation would parse markdown/content more thoroughly
       const sections = {};
       let currentSection = 'main';
       let currentSubsection = null;
       
-      // Split by lines and process
       const lines = content.split('\n');
       let buffer = [];
       
       lines.forEach(line => {
         if (line.startsWith('# ')) {
-          // New main section
           if (buffer.length > 0) {
             if (currentSubsection) {
               if (!sections[currentSection]) sections[currentSection] = {};
@@ -122,7 +83,6 @@ const ContextVisualizer = ({ userId, sessionId }) => {
           currentSubsection = null;
           buffer = [];
         } else if (line.startsWith('## ')) {
-          // New subsection
           if (buffer.length > 0) {
             if (currentSubsection) {
               if (!sections[currentSection]) sections[currentSection] = {};
@@ -138,7 +98,6 @@ const ContextVisualizer = ({ userId, sessionId }) => {
         }
       });
       
-      // Add the last section
       if (buffer.length > 0) {
         if (currentSubsection) {
           if (!sections[currentSection]) sections[currentSection] = {};
@@ -151,12 +110,9 @@ const ContextVisualizer = ({ userId, sessionId }) => {
       setContextParts(sections);
     } catch (error) {
       console.error('Error parsing context:', error);
-    } finally {
-      setParsingContext(false);
     }
   };
 
-  // Function to get context from the MCP server
   const getContext = async () => {
     setLoading(true);
     setContext(null);
@@ -174,7 +130,7 @@ const ContextVisualizer = ({ userId, sessionId }) => {
         difficulty_level: difficultyLevel,
         user_id: userId,
         max_items: maxItems,
-        access_tier: 'premium', // For demo purposes
+        access_tier: 'premium',
         session_id: sessionId,
         include_custom_lists: true
       });
@@ -182,26 +138,18 @@ const ContextVisualizer = ({ userId, sessionId }) => {
       const endTime = performance.now();
       setGenerationTime(Math.round(endTime - startTime));
       
-      // Check if the response contains a cache indicator
       if (response.headers['x-cache-hit']) {
         setCachedStatus(true);
-        if (response.headers['x-cache-ttl']) {
-          setCacheTTL(parseInt(response.headers['x-cache-ttl'], 10));
-        }
       }
       
-      // Set context
       setContext(response.data);
       
-      // Parse token count
       if (response.data.metadata && response.data.metadata.token_count) {
         setContextTokenCount(response.data.metadata.token_count);
       } else {
-        // Approximate tokens if not provided
         setContextTokenCount(Math.round(response.data.content.length / 4));
       }
       
-      // Parse context content into sections
       parseContextIntoSections(response.data.content);
       
     } catch (error) {
@@ -211,7 +159,6 @@ const ContextVisualizer = ({ userId, sessionId }) => {
     }
   };
 
-  // Calculate composition percentages for visualization
   const calculateComposition = () => {
     const composition = {};
     let total = 0;
@@ -230,7 +177,6 @@ const ContextVisualizer = ({ userId, sessionId }) => {
       }
     });
     
-    // Convert to percentages
     Object.keys(composition).forEach(key => {
       composition[key] = Math.round((composition[key] / total) * 100);
     });
@@ -240,39 +186,60 @@ const ContextVisualizer = ({ userId, sessionId }) => {
 
   return (
     <Box>
+      <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+        <Typography variant="h5" gutterBottom>
+          {labels.contextVisualizer.labels.headerTitle}
+        </Typography>
+        <Typography variant="body1" paragraph>
+          {labels.contextVisualizer.labels.headerDescription}
+        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+          <Chip label={labels.contextVisualizer.labels.badges.dynamicContent} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          <Chip label={labels.contextVisualizer.labels.badges.contextAware} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          <Chip label={labels.contextVisualizer.labels.badges.realTime} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          <Chip label={labels.contextVisualizer.labels.badges.configurable} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+        </Box>
+      </Paper>
+
       <Grid container spacing={3}>
         <Grid item xs={12} md={5}>
           <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Context Configuration
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                {labels.contextVisualizer.labels.configuration}
+              </Typography>
+              <Chip label={labels.contextVisualizer.labels.steps.step1} color="primary" size="small" />
+            </Box>
+            
+            {/* What This Does Explanation */}
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography variant="body2">
+                <strong>{labels.contextVisualizer.labels.configurationAlert.title}</strong> {labels.contextVisualizer.labels.configurationAlert.description}
+              </Typography>
+            </Alert>
             
             <Box sx={{ mb: 3 }}>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Context Type</InputLabel>
+                <InputLabel>{labels.contextVisualizer.labels.contextType}</InputLabel>
                 <Select
                   value={contextType}
-                  label="Context Type"
+                  label={labels.contextVisualizer.labels.contextType}
                   onChange={(e) => setContextType(e.target.value)}
                 >
-                  <MenuItem value="mixed">Mixed</MenuItem>
-                  <MenuItem value="vocabulary">Vocabulary</MenuItem>
-                  <MenuItem value="grammar">Grammar</MenuItem>
-                  <MenuItem value="conversation">Conversation</MenuItem>
-                  <MenuItem value="personalized">Personalized</MenuItem>
-                  <MenuItem value="exercise">Exercise</MenuItem>
-                  <MenuItem value="assessment">Assessment</MenuItem>
+                  {labels.contextTypes.types.map(type => (
+                    <MenuItem key={type.name} value={type.name}>{type.name}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Difficulty Level</InputLabel>
+                <InputLabel>{labels.contextVisualizer.labels.difficultyLevel}</InputLabel>
                 <Select
                   value={difficultyLevel}
-                  label="Difficulty Level"
+                  label={labels.contextVisualizer.labels.difficultyLevel}
                   onChange={(e) => setDifficultyLevel(e.target.value)}
                 >
-                  {DIFFICULTY_LEVELS.map(level => (
+                  {labels.contextVisualizer.difficultyLevels.map(level => (
                     <MenuItem key={level} value={level}>
                       {level.charAt(0).toUpperCase() + level.slice(1)}
                     </MenuItem>
@@ -292,8 +259,8 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                   <TextField
                     {...params}
                     variant="outlined"
-                    label="Categories"
-                    placeholder="Select categories"
+                    label={labels.contextVisualizer.labels.categories}
+                    placeholder={labels.contextVisualizer.labels.categoriesPlaceholder}
                   />
                 )}
                 sx={{ mb: 2 }}
@@ -302,7 +269,7 @@ const ContextVisualizer = ({ userId, sessionId }) => {
               
               <Box sx={{ mb: 2 }}>
                 <Typography gutterBottom>
-                  Max Items: {maxItems}
+                  {`${labels.contextVisualizer.labels.maxItems}: ${maxItems}`}
                 </Typography>
                 <Slider
                   value={maxItems}
@@ -326,23 +293,47 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                 onClick={getContext}
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : <Refresh />}
+                sx={{ py: 1.5, fontSize: '1.1rem' }}
               >
-                Generate Context
+                {loading ? labels.contextVisualizer.labels.generating : labels.contextVisualizer.labels.generateButtonActive}
               </Button>
+              
+              {/* Generation Process Explanation */}
+              {loading && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    {labels.contextVisualizer.labels.processExplanation.title}
+                  </Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    {labels.contextVisualizer.labels.processExplanation.steps.map((step, index) => (
+                      <Typography key={index} component="li" variant="body2">{step}</Typography>
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </Box>
             
             <Divider sx={{ my: 2 }} />
             
-            <Typography variant="h6" gutterBottom>
-              Context Metrics
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                {labels.contextVisualizer.labels.metrics}
+              </Typography>
+              <Chip label={labels.contextVisualizer.labels.steps.step2} color="secondary" size="small" />
+            </Box>
+            
+            <Alert severity="success" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                <strong>{labels.contextVisualizer.labels.metricsAlert.title}</strong> {labels.contextVisualizer.labels.metricsAlert.description}
+              </Typography>
+            </Alert>
             
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <Card variant="outlined">
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Token Count
+                      {labels.contextVisualizer.labels.tokenCount}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <DataUsage sx={{ mr: 1, color: 'primary.main' }} />
@@ -358,7 +349,7 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                 <Card variant="outlined">
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Generation Time
+                      {labels.contextVisualizer.labels.generationTime}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Speed sx={{ mr: 1, color: 'primary.main' }} />
@@ -374,7 +365,7 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                 <Card variant="outlined">
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Cache Status
+                      {labels.contextVisualizer.labels.cacheStatus}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Cached 
@@ -384,7 +375,7 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                         }} 
                       />
                       <Typography variant="h5">
-                        {cachedStatus ? 'HIT' : 'MISS'}
+                        {cachedStatus ? labels.contextVisualizer.labels.cacheHit : labels.contextVisualizer.labels.cacheMiss}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -395,7 +386,7 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                 <Card variant="outlined">
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Sections
+                      {labels.contextVisualizer.labels.sections}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Layers sx={{ mr: 1, color: 'primary.main' }} />
@@ -414,10 +405,11 @@ const ContextVisualizer = ({ userId, sessionId }) => {
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                Context Visualization
+                {labels.contextVisualizer.labels.outputTitle}
               </Typography>
+              <Chip label={labels.contextVisualizer.labels.steps.step3} color="success" size="small" sx={{ mr: 1 }} />
               
-              <Tooltip title="Toggle JSON View">
+              <Tooltip title={labels.contextVisualizer.labels.jsonView}>
                 <IconButton onClick={() => setShowJsonView(!showJsonView)}>
                   <Code />
                 </IconButton>
@@ -427,35 +419,62 @@ const ContextVisualizer = ({ userId, sessionId }) => {
             {loading ? (
               <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <CircularProgress sx={{ mb: 2 }} />
-                <Typography>Generating Context...</Typography>
+                <Typography variant="h6" gutterBottom>{labels.contextVisualizer.labels.loadingTitle}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, textAlign: 'center' }}>
+                  {labels.contextVisualizer.labels.loadingDescription}
+                </Typography>
                 <LinearProgress sx={{ width: '100%', mt: 2 }} />
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 2, width: '100%' }}>
+                  <Typography variant="caption" color="text.secondary">
+                    {labels.contextVisualizer.labels.loadingNote}
+                  </Typography>
+                </Box>
               </Box>
             ) : !context ? (
               <Box sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Alert severity="info" sx={{ width: '100%' }}>
-                  Configure and generate context to visualize how MCP works
+                <Alert severity="info" sx={{ width: '100%', mb: 3 }}>
+                  <Typography variant="body1" gutterBottom>
+                    <strong>{labels.contextVisualizer.labels.emptyState.title}</strong>
+                  </Typography>
+                  <Typography variant="body2">
+                    {labels.contextVisualizer.labels.emptyState.description}
+                  </Typography>
                 </Alert>
+                <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 2, width: '100%' }}>
+                  <Typography variant="subtitle2" gutterBottom>{labels.contextVisualizer.labels.emptyState.previewTitle}</Typography>
+                  <Box component="ul" sx={{ pl: 2, m: 0 }}>
+                    {labels.contextVisualizer.labels.emptyState.previewItems.map((item, index) => (
+                      <Typography key={index} component="li" variant="body2">{item}</Typography>
+                    ))}
+                  </Box>
+                </Box>
               </Box>
             ) : showJsonView ? (
               <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
-                <ReactJson 
-                  src={context} 
+                <JsonView 
+                  value={context} 
                   collapsed={1} 
                   displayDataTypes={false}
-                  enableClipboard={false}
+                  displayObjectSize={false}
                   name={false}
                 />
               </Box>
             ) : (
               <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+                <Alert severity="success" sx={{ mb: 3 }}>
+                  <Typography variant="body2">
+                    <strong>{labels.contextVisualizer.labels.successAlert.title}</strong> {labels.contextVisualizer.labels.successAlert.description}
+                  </Typography>
+                </Alert>
+                
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="subtitle1" gutterBottom>
-                    Context Type: 
+                    {labels.contextVisualizer.labels.contextTypeLabel}
                     <Chip 
                       label={context.metadata?.type || contextType} 
                       sx={{ 
                         ml: 1, 
-                        bgcolor: CONTEXT_COLORS[contextType] || '#757575',
+                        bgcolor: labels.contextVisualizer.colors[contextType] || '#757575',
                         color: 'white'
                       }} 
                       size="small" 
@@ -473,13 +492,19 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                     ))}
                     {categories.length === 0 && (
                       <Typography variant="body2" color="text.secondary">
-                        No categories selected
+                        {labels.contextVisualizer.labels.noCategories}
                       </Typography>
                     )}
                   </Box>
                   
-                  <Typography variant="subtitle2" gutterBottom>
-                    Context Composition:
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+                      {labels.contextVisualizer.labels.compositionTitle}
+                    </Typography>
+                    <Chip label={labels.contextVisualizer.labels.compositionChip} size="small" color="primary" variant="outlined" />
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                    {labels.contextVisualizer.labels.compositionDescription}
                   </Typography>
                   
                   <Box sx={{ mb: 2 }}>
@@ -498,75 +523,13 @@ const ContextVisualizer = ({ userId, sessionId }) => {
                           value={percentage}
                           sx={{ 
                             height: 8, 
-                            borderRadius: 1,
-                            bgcolor: 'grey.200',
-                            '& .MuiLinearProgress-bar': {
-                              bgcolor: CONTEXT_COLORS[contextType] || 'primary.main'
-                            }
-                          }}
+                            borderRadius: 4,
+                            bgcolor: 'action.hover'
+                          }} 
                         />
                       </Box>
                     ))}
                   </Box>
-                </Box>
-                
-                <Divider sx={{ my: 2 }} />
-                
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Context Content:
-                  </Typography>
-                  
-                  {Object.keys(contextParts).length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      No content available
-                    </Typography>
-                  ) : (
-                    Object.keys(contextParts).map(section => (
-                      <Accordion 
-                        key={section}
-                        expanded={highlightedSection === section}
-                        onChange={() => setHighlightedSection(highlightedSection === section ? null : section)}
-                      >
-                        <AccordionSummary expandIcon={<ExpandMore />}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            {section.toLowerCase().includes('vocabulary') ? (
-                              <Category sx={{ mr: 1, color: CONTEXT_COLORS.vocabulary }} />
-                            ) : section.toLowerCase().includes('grammar') ? (
-                              <School sx={{ mr: 1, color: CONTEXT_COLORS.grammar }} />
-                            ) : (
-                              <Storage sx={{ mr: 1, color: CONTEXT_COLORS.mixed }} />
-                            )}
-                            <Typography>{section}</Typography>
-                          </Box>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                          {typeof contextParts[section] === 'string' ? (
-                            <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.9rem' }}>
-                              {contextParts[section]}
-                            </pre>
-                          ) : (
-                            Object.keys(contextParts[section]).map(subsection => (
-                              <Box key={subsection} sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" gutterBottom>
-                                  {subsection}
-                                </Typography>
-                                <pre style={{ 
-                                  whiteSpace: 'pre-wrap', 
-                                  fontSize: '0.9rem', 
-                                  padding: '0.5rem', 
-                                  background: '#f5f5f5', 
-                                  borderRadius: '4px'
-                                }}>
-                                  {contextParts[section][subsection]}
-                                </pre>
-                              </Box>
-                            ))
-                          )}
-                        </AccordionDetails>
-                      </Accordion>
-                    ))
-                  )}
                 </Box>
               </Box>
             )}
@@ -578,4 +541,3 @@ const ContextVisualizer = ({ userId, sessionId }) => {
 };
 
 export default ContextVisualizer;
-

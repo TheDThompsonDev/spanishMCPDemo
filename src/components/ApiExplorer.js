@@ -12,15 +12,11 @@ import {
   InputLabel,
   Card,
   CardContent,
-  Divider,
-  Chip,
   IconButton,
-  Tooltip,
   Tab,
   Tabs,
   CircularProgress,
-  Alert,
-  useTheme,
+  Alert
 } from '@mui/material';
 import {
   Send,
@@ -28,93 +24,49 @@ import {
   Api,
   ContentCopy,
   Check,
-  Refresh,
+  Translate,
+  School,
+  Psychology
 } from '@mui/icons-material';
-import ReactJson from 'react-json-view';
+import JsonView from '@uiw/react-json-view';
+import { labels } from '../labels';
 
 const ApiExplorer = ({ userId, sessionId }) => {
-  const theme = useTheme();
   const [tabIndex, setTabIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   
-  // Form states
-  const [prompt, setPrompt] = useState('Translate to Spanish: Hello, how are you?');
+  const [prompt, setPrompt] = useState(labels.apiEndpoints.defaultValues.prompt);
   const [contextType, setContextType] = useState('mixed');
-  const [translateText, setTranslateText] = useState('Hello, how are you?');
+  const [translateText, setTranslateText] = useState(labels.apiEndpoints.defaultValues.translateText);
   const [translateTarget, setTranslateTarget] = useState('spanish');
-  const [conjugateVerb, setConjugateVerb] = useState('hablar');
+  const [conjugateVerb, setConjugateVerb] = useState(labels.apiEndpoints.defaultValues.conjugateVerb);
   const [conjugateTense, setConjugateTense] = useState('present');
-  const [queryText, setQueryText] = useState('What is the difference between ser and estar?');
+  const [queryText, setQueryText] = useState(labels.apiEndpoints.defaultValues.queryText);
 
-  // Simulated API responses
   const simulatedResponses = {
     models: {
-      object: "model_list",
-      data: [
-        {
-          id: "spanish-learning-model",
-          name: "Spanish Learning Model",
-          version: "1.0.0",
-          capabilities: {
-            context_window: 16000,
-            supports_context_manipulation: true,
-            supports_streaming: false,
-            supported_context_types: [
-              "vocabulary", "grammar", "mixed", "conversation",
-              "exercise", "assessment", "personalized"
-            ]
-          }
-        }
-      ],
-      server_version: "1.0.0"
+      ...labels.apiExplorer.simulatedResponses.models
     },
     context: {
-      object: "context",
-      content: "# Spanish Vocabulary Reference\n\n## Greetings\n\n### hola\n- **Translation:** hello\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: ¡Hola! ¿Cómo estás?\n  English: Hello! How are you?\n\n- Spanish: Hola a todos.\n  English: Hello everyone.\n\n",
-      metadata: {
-        type: "vocabulary",
-        source: "spanish-learning-mcp",
-        token_count: 89,
-        categories: ["greeting"],
-        difficulty_level: "beginner"
-      }
+      ...labels.apiExplorer.simulatedResponses.context
     },
     generate: {
-      object: "generation",
-      model: "spanish-learning-model",
-      choices: [
-        {
-          text: "Hola, ¿cómo estás?",
-          finish_reason: "stop"
-        }
-      ],
-      usage: {
-        prompt_tokens: 10,
-        completion_tokens: 7,
-        total_tokens: 17
-      },
+      ...labels.apiExplorer.simulatedResponses.generate,
       session_id: sessionId || "session_1234567890"
     },
     translate: {
-      originalText: "Hello, how are you?",
-      translatedText: "Hola, ¿cómo estás?",
-      targetLanguage: "spanish",
-      sourceLanguage: "english",
+      ...labels.apiExplorer.simulatedResponses.translate,
       sessionId: sessionId || "session_1234567890"
     },
     conjugate: {
-      verb: "hablar",
-      tense: "present",
-      conjugation: "yo hablo\ntú hablas\nél/ella/usted habla\nnosotros/as hablamos\nvosotros/as habláis\nellos/ellas/ustedes hablan",
+      ...labels.apiExplorer.simulatedResponses.conjugate,
       sessionId: sessionId || "session_1234567890"
     },
     query: {
-      query: "What is the difference between ser and estar?",
-      response: "In Spanish, both 'ser' and 'estar' mean 'to be' in English, but they are used in different contexts. 'Ser' is used for permanent or inherent characteristics, while 'estar' is used for temporary states or conditions.",
-      contextType: "grammar",
+      ...labels.apiExplorer.simulatedResponses.query,
       sessionId: sessionId || "session_1234567890"
     }
   };
@@ -137,11 +89,9 @@ const ApiExplorer = ({ userId, sessionId }) => {
     setError('');
     setResponse(null);
     
-    // Simulate API delay
     setTimeout(() => {
       setLoading(false);
       
-      // Return simulated response based on endpoint
       switch (endpoint) {
         case 'models':
           setResponse(simulatedResponses.models);
@@ -162,121 +112,22 @@ const ApiExplorer = ({ userId, sessionId }) => {
           setResponse(simulatedResponses.query);
           break;
         default:
-          setError('Unknown endpoint');
+          setError(labels.apiExplorer.errors.unknownEndpoint);
       }
     }, 1000);
   };
 
-  // Format code for display
-  const formatCode = (endpoint, data = {}) => {
-    let code = '';
-    
-    switch (endpoint) {
-      case 'models':
-        code = `// GET /mcp/models
-fetch('/mcp/models')
-  .then(response => response.json())
-  .then(data => console.log(data));`;
-        break;
-      case 'context':
-        code = `// POST /mcp/context
-fetch('/mcp/context', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'user-id': '${userId}'
-  },
-  body: JSON.stringify({
-    context_type: '${contextType}',
-    operation: 'get',
-    difficulty_level: 'beginner'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`;
-        break;
-      case 'generate':
-        code = `// POST /mcp/generate
-fetch('/mcp/generate', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'user-id': '${userId}'
-  },
-  body: JSON.stringify({
-    prompt: '${prompt}',
-    context_type: '${contextType}',
-    model: 'spanish-learning-model'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`;
-        break;
-      case 'translate':
-        code = `// POST /api/translate
-fetch('/api/translate', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'user-id': '${userId}'
-  },
-  body: JSON.stringify({
-    text: '${translateText}',
-    targetLanguage: '${translateTarget}'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`;
-        break;
-      case 'conjugate':
-        code = `// POST /api/conjugate
-fetch('/api/conjugate', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'user-id': '${userId}'
-  },
-  body: JSON.stringify({
-    verb: '${conjugateVerb}',
-    tense: '${conjugateTense}'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`;
-        break;
-      case 'query':
-        code = `// POST /api/query
-fetch('/api/query', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'user-id': '${userId}'
-  },
-  body: JSON.stringify({
-    query: '${queryText}',
-    contextType: '${contextType}'
-  })
-})
-  .then(response => response.json())
-  .then(data => console.log(data));`;
-        break;
-      default:
-        code = '// No code available';
-    }
-    
-    return code;
-  };
 
   const renderEndpointForm = () => {
     switch (tabIndex) {
-      case 0: // Models
+      case 0:
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              GET /mcp/models
+              {labels.apiEndpoints.endpoints.models.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Lists available models and their capabilities.
+              {labels.apiEndpoints.endpoints.models.description}
             </Typography>
             <Button
               variant="contained"
@@ -285,35 +136,33 @@ fetch('/api/query', {
               onClick={() => handleRequest('models')}
               disabled={loading}
             >
-              Send Request
+              {labels.apiEndpoints.endpoints.models.buttonText}
             </Button>
           </Box>
         );
       
-      case 1: // Context
+      case 1:
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              POST /mcp/context
+              {labels.apiEndpoints.endpoints.context.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Retrieves or manipulates context for AI interactions.
+              {labels.apiEndpoints.endpoints.context.description}
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Context Type</InputLabel>
+                  <InputLabel>{labels.apiExplorer.labels.contextType}</InputLabel>
                   <Select
                     value={contextType}
-                    label="Context Type"
+                    label={labels.apiExplorer.labels.contextType}
                     onChange={(e) => setContextType(e.target.value)}
                   >
-                    <MenuItem value="mixed">Mixed</MenuItem>
-                    <MenuItem value="vocabulary">Vocabulary</MenuItem>
-                    <MenuItem value="grammar">Grammar</MenuItem>
-                    <MenuItem value="conversation">Conversation</MenuItem>
-                    <MenuItem value="personalized">Personalized</MenuItem>
+                    {labels.contextTypes.types.map(type => (
+                      <MenuItem key={type.name} value={type.name}>{type.name}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -326,25 +175,25 @@ fetch('/api/query', {
               onClick={() => handleRequest('context')}
               disabled={loading}
             >
-              Send Request
+              {labels.apiEndpoints.endpoints.context.buttonText}
             </Button>
           </Box>
         );
       
-      case 2: // Generate
+      case 2:
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              POST /mcp/generate
+              {labels.apiEndpoints.endpoints.generate.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Generates text using the AI model with context.
+              {labels.apiEndpoints.endpoints.generate.description}
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12}>
                 <TextField
-                  label="Prompt"
+                  label={labels.apiExplorer.labels.prompt}
                   fullWidth
                   multiline
                   rows={3}
@@ -355,17 +204,15 @@ fetch('/api/query', {
               
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Context Type</InputLabel>
+                  <InputLabel>{labels.apiExplorer.labels.contextType}</InputLabel>
                   <Select
                     value={contextType}
-                    label="Context Type"
+                    label={labels.apiExplorer.labels.contextType}
                     onChange={(e) => setContextType(e.target.value)}
                   >
-                    <MenuItem value="mixed">Mixed</MenuItem>
-                    <MenuItem value="vocabulary">Vocabulary</MenuItem>
-                    <MenuItem value="grammar">Grammar</MenuItem>
-                    <MenuItem value="conversation">Conversation</MenuItem>
-                    <MenuItem value="personalized">Personalized</MenuItem>
+                    {labels.contextTypes.types.map(type => (
+                      <MenuItem key={type.name} value={type.name}>{type.name}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -378,25 +225,25 @@ fetch('/api/query', {
               onClick={() => handleRequest('generate')}
               disabled={loading || !prompt.trim()}
             >
-              Send Request
+              {labels.apiEndpoints.endpoints.generate.buttonText}
             </Button>
           </Box>
         );
       
-      case 3: // Translate
+      case 3:
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              POST /api/translate
+              {labels.apiEndpoints.endpoints.translate.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Translates text between English and Spanish.
+              {labels.apiEndpoints.endpoints.translate.description}
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12}>
                 <TextField
-                  label="Text to Translate"
+                  label={labels.apiExplorer.labels.textToTranslate}
                   fullWidth
                   multiline
                   rows={3}
@@ -407,14 +254,14 @@ fetch('/api/query', {
               
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Target Language</InputLabel>
+                  <InputLabel>{labels.apiExplorer.labels.targetLanguage}</InputLabel>
                   <Select
                     value={translateTarget}
-                    label="Target Language"
+                    label={labels.apiExplorer.labels.targetLanguage}
                     onChange={(e) => setTranslateTarget(e.target.value)}
                   >
-                    <MenuItem value="spanish">Spanish</MenuItem>
-                    <MenuItem value="english">English</MenuItem>
+                    <MenuItem value="spanish">{labels.apiExplorer.languages.spanish}</MenuItem>
+                    <MenuItem value="english">{labels.apiExplorer.languages.english}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -427,25 +274,25 @@ fetch('/api/query', {
               onClick={() => handleRequest('translate')}
               disabled={loading || !translateText.trim()}
             >
-              Translate
+              {labels.apiEndpoints.endpoints.translate.buttonText}
             </Button>
           </Box>
         );
       
-      case 4: // Conjugate
+      case 4:
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              POST /api/conjugate
+              {labels.apiEndpoints.endpoints.conjugate.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Provides verb conjugations in different tenses.
+              {labels.apiEndpoints.endpoints.conjugate.description}
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="Verb"
+                  label={labels.apiExplorer.labels.verb}
                   fullWidth
                   value={conjugateVerb}
                   onChange={(e) => setConjugateVerb(e.target.value)}
@@ -454,18 +301,18 @@ fetch('/api/query', {
               
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
-                  <InputLabel>Tense</InputLabel>
+                  <InputLabel>{labels.apiExplorer.labels.tense}</InputLabel>
                   <Select
                     value={conjugateTense}
-                    label="Tense"
+                    label={labels.apiExplorer.labels.tense}
                     onChange={(e) => setConjugateTense(e.target.value)}
                   >
-                    <MenuItem value="present">Present</MenuItem>
-                    <MenuItem value="preterite">Preterite</MenuItem>
-                    <MenuItem value="imperfect">Imperfect</MenuItem>
-                    <MenuItem value="future">Future</MenuItem>
-                    <MenuItem value="conditional">Conditional</MenuItem>
-                    <MenuItem value="subjunctive">Subjunctive</MenuItem>
+                    <MenuItem value="present">{labels.apiExplorer.tenses.present}</MenuItem>
+                    <MenuItem value="preterite">{labels.apiExplorer.tenses.preterite}</MenuItem>
+                    <MenuItem value="imperfect">{labels.apiExplorer.tenses.imperfect}</MenuItem>
+                    <MenuItem value="future">{labels.apiExplorer.tenses.future}</MenuItem>
+                    <MenuItem value="conditional">{labels.apiExplorer.tenses.conditional}</MenuItem>
+                    <MenuItem value="subjunctive">{labels.apiExplorer.tenses.subjunctive}</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -478,25 +325,25 @@ fetch('/api/query', {
               onClick={() => handleRequest('conjugate')}
               disabled={loading || !conjugateVerb.trim()}
             >
-              Conjugate
+              {labels.apiEndpoints.endpoints.conjugate.buttonText}
             </Button>
           </Box>
         );
       
-      case 5: // Query
+      case 5:
         return (
           <Box>
             <Typography variant="h6" gutterBottom>
-              POST /api/query
+              {labels.apiEndpoints.endpoints.query.title}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              General query endpoint for Spanish learning questions.
+              {labels.apiEndpoints.endpoints.query.description}
             </Typography>
             
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid item xs={12}>
                 <TextField
-                  label="Query"
+                  label={labels.apiExplorer.labels.query}
                   fullWidth
                   multiline
                   rows={3}
@@ -507,16 +354,15 @@ fetch('/api/query', {
               
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>Context Type</InputLabel>
+                  <InputLabel>{labels.apiExplorer.labels.contextType}</InputLabel>
                   <Select
                     value={contextType}
-                    label="Context Type"
+                    label={labels.apiExplorer.labels.contextType}
                     onChange={(e) => setContextType(e.target.value)}
                   >
-                    <MenuItem value="mixed">Mixed</MenuItem>
-                    <MenuItem value="vocabulary">Vocabulary</MenuItem>
-                    <MenuItem value="grammar">Grammar</MenuItem>
-                    <MenuItem value="conversation">Conversation</MenuItem>
+                    {labels.contextTypes.types.map(type => (
+                      <MenuItem key={type.name} value={type.name}>{type.name}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -529,7 +375,7 @@ fetch('/api/query', {
               onClick={() => handleRequest('query')}
               disabled={loading || !queryText.trim()}
             >
-              Send Query
+              {labels.apiEndpoints.endpoints.query.buttonText}
             </Button>
           </Box>
         );
@@ -540,135 +386,52 @@ fetch('/api/query', {
   };
 
   return (
-    <Box>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          MCP API Explorer
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Explore and test the Spanish Learning MCP API endpoints.
-        </Typography>
-      </Box>
-      
-      <Grid container spacing={3}>
-        {/* Left side - API Endpoints */}
-        <Grid item xs={12} md={4}>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              API Endpoints
-            </Typography>
-            <Tabs
-              value={tabIndex}
-              onChange={handleTabChange}
-              orientation="vertical"
-              variant="scrollable"
-              sx={{ borderRight: 1, borderColor: 'divider' }}
-            >
-              <Tab label="MCP Models" />
-              <Tab label="MCP Context" />
-              <Tab label="MCP Generate" />
-              <Tab label="Translate" />
-              <Tab label="Conjugate" />
-              <Tab label="Query" />
-            </Tabs>
-          </Paper>
-        </Grid>
-        
-        {/* Right side - Request Form and Response */}
-        <Grid item xs={12} md={8}>
-          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-            {renderEndpointForm()}
-            
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Request Code:
-              </Typography>
-              <Paper
-                variant="outlined"
-                sx={{
-                  p: 2,
-                  bgcolor: 'rgba(0, 0, 0, 0.03)',
-                  fontFamily: 'monospace',
-                  fontSize: '0.8rem',
-                  position: 'relative'
-                }}
-              >
-                <Tooltip title="Copy Code">
+    <Box sx={{ width: '100%', mb: 4 }}>
+      <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Tabs
+          value={tabIndex}
+          onChange={handleTabChange}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
+        >
+          <Tab icon={<Api />} label={labels.apiExplorer.tabs.models} />
+          <Tab icon={<Code />} label={labels.apiExplorer.tabs.context} />
+          <Tab icon={<Send />} label={labels.apiExplorer.tabs.generate} />
+          <Tab icon={<Translate />} label={labels.apiExplorer.tabs.translate} />
+          <Tab icon={<School />} label={labels.apiExplorer.tabs.conjugate} />
+          <Tab icon={<Psychology />} label={labels.apiExplorer.tabs.query} />
+        </Tabs>
+
+        <Box sx={{ p: 3 }}>
+          {renderEndpointForm()}
+          
+          {error && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {response && (
+            <Card sx={{ mt: 3 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" sx={{ flexGrow: 1 }}>
+                    {labels.apiExplorer.labels.response}
+                  </Typography>
                   <IconButton
+                    onClick={() => copyToClipboard(JSON.stringify(response, null, 2))}
                     size="small"
-                    sx={{ position: 'absolute', top: 8, right: 8 }}
-                    onClick={() => copyToClipboard(formatCode(
-                      tabIndex === 0 ? 'models' :
-                      tabIndex === 1 ? 'context' :
-                      tabIndex === 2 ? 'generate' :
-                      tabIndex === 3 ? 'translate' :
-                      tabIndex === 4 ? 'conjugate' : 'query'
-                    ))}
                   >
                     {copied ? <Check /> : <ContentCopy />}
                   </IconButton>
-                </Tooltip>
-                <pre style={{ margin: 0, maxHeight: 200, overflow: 'auto' }}>
-                  {formatCode(
-                    tabIndex === 0 ? 'models' :
-                    tabIndex === 1 ? 'context' :
-                    tabIndex === 2 ? 'generate' :
-                    tabIndex === 3 ? 'translate' :
-                    tabIndex === 4 ? 'conjugate' : 'query'
-                  )}
-                </pre>
-              </Paper>
-            </Box>
-          </Paper>
-          
-          {/* Response Section */}
-          {(loading || response) && (
-            <Paper elevation={2} sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Response
-              </Typography>
-              
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-                  <CircularProgress />
                 </Box>
-              ) : response ? (
-                <Box>
-                  <Chip
-                    label={`Status: 200 OK`}
-                    color="success"
-                    size="small"
-                    sx={{ mb: 2 }}
-                  />
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      bgcolor: 'rgba(0, 0, 0, 0.03)',
-                      maxHeight: 400,
-                      overflow: 'auto'
-                    }}
-                  >
-                    <ReactJson
-                      src={response}
-                      theme="rjv-default"
-                      displayDataTypes={false}
-                      name={false}
-                      collapsed={1}
-                    />
-                  </Paper>
-                </Box>
-              ) : null}
-            </Paper>
+                <JsonView value={response} style={{ fontSize: '0.9rem' }} />
+              </CardContent>
+            </Card>
           )}
-        </Grid>
-      </Grid>
+        </Box>
+      </Paper>
     </Box>
   );
 };

@@ -6,13 +6,10 @@ import {
   Typography,
   Card,
   CardContent,
-  Divider,
   LinearProgress,
   CircularProgress,
   Button,
   Chip,
-  IconButton,
-  Tooltip,
   Alert,
   List,
   ListItem,
@@ -34,20 +31,16 @@ import {
   LocalFireDepartment,
   CheckCircle,
   Refresh,
-  CalendarToday,
   Timer,
   Psychology,
   BarChart,
   Lightbulb,
-  Star,
-  StarBorder,
-  StarHalf,
 } from '@mui/icons-material';
 import axios from 'axios';
 import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend, CategoryScale, LinearScale, BarElement, Title, RadialLinearScale, PointElement, LineElement } from 'chart.js';
-import { Pie, Bar, Radar } from 'react-chartjs-2';
+import { Bar, Radar } from 'react-chartjs-2';
+import { labels } from '../labels';
 
-// Register ChartJS components
 ChartJS.register(
   ArcElement, 
   ChartTooltip, 
@@ -67,47 +60,8 @@ const ProgressTracker = ({ userId }) => {
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(null);
   const [tabValue, setTabValue] = useState(0);
-  const [simulateProgress, setSimulateProgress] = useState(true); // For demo purposes
+  const [simulateProgress] = useState(true);
 
-  // Simulated progress data for demo
-  const simulatedProgress = {
-    level: "intermediate",
-    vocabularyMastered: 120,
-    grammarMastered: 15,
-    streakDays: 7,
-    totalSessions: 25,
-    totalTimeSpent: 7200, // in seconds
-    accuracy: 78,
-    skillLevels: {
-      vocabulary: 0.65,
-      grammar: 0.58,
-      listening: 0.42,
-      speaking: 0.35,
-      reading: 0.70,
-      writing: 0.48
-    },
-    recentProgress: [
-      { date: '2025-05-20', vocabularyLearned: 8, timeSpent: 1200 },
-      { date: '2025-05-21', vocabularyLearned: 12, timeSpent: 1500 },
-      { date: '2025-05-22', vocabularyLearned: 5, timeSpent: 900 },
-      { date: '2025-05-23', vocabularyLearned: 15, timeSpent: 1800 },
-      { date: '2025-05-24', vocabularyLearned: 10, timeSpent: 1200 },
-      { date: '2025-05-25', vocabularyLearned: 18, timeSpent: 2100 },
-      { date: '2025-05-26', vocabularyLearned: 14, timeSpent: 1800 }
-    ],
-    recommendations: [
-      { type: 'vocabulary', word: 'conseguir', translation: 'to obtain/get', difficulty: 'intermediate' },
-      { type: 'grammar', title: 'Subjunctive Mood', difficulty: 'intermediate' },
-      { type: 'practice', title: 'Restaurant Conversations', difficulty: 'intermediate' }
-    ],
-    achievements: [
-      { title: '7-Day Streak', description: 'Practiced for 7 consecutive days', completed: true, icon: <LocalFireDepartment /> },
-      { title: '100 Words Mastered', description: 'Learned 100 Spanish vocabulary words', completed: true, icon: <Translate /> },
-      { title: 'Grammar Expert', description: 'Mastered 20 grammar concepts', completed: false, progress: 0.75, icon: <School /> }
-    ]
-  };
-
-  // Fetch user progress data
   useEffect(() => {
     const fetchProgress = async () => {
       setLoading(true);
@@ -115,9 +69,8 @@ const ProgressTracker = ({ userId }) => {
       
       try {
         if (simulateProgress) {
-          // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 1500));
-          setProgress(simulatedProgress);
+          setProgress(labels.progressTracker.simulatedData);
         } else {
           const response = await axios.get('/api/progress', {
             headers: {
@@ -128,7 +81,7 @@ const ProgressTracker = ({ userId }) => {
         }
       } catch (err) {
         console.error('Error fetching progress:', err);
-        setError('Failed to fetch progress data: ' + (err.response?.data?.message || err.message));
+        setError(labels.progressTracker.error + (err.response?.data?.message || err.message));
       } finally {
         setLoading(false);
       }
@@ -145,9 +98,8 @@ const ProgressTracker = ({ userId }) => {
     setProgress(null);
     setLoading(true);
     
-    // Simulate refresh with slight changes to data
     setTimeout(() => {
-      const updatedProgress = { ...simulatedProgress };
+      const updatedProgress = { ...labels.progressTracker.simulatedData };
       updatedProgress.vocabularyMastered += 3;
       updatedProgress.accuracy += 1;
       updatedProgress.skillLevels.vocabulary += 0.02;
@@ -157,14 +109,12 @@ const ProgressTracker = ({ userId }) => {
     }, 1500);
   };
 
-  // Format time duration as HH:MM
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     return `${hours}h ${minutes}m`;
   };
 
-  // Create skill radar chart data
   const createSkillRadarData = () => {
     if (!progress) return null;
     
@@ -174,7 +124,7 @@ const ProgressTracker = ({ userId }) => {
       ),
       datasets: [
         {
-          label: 'Skill Levels',
+          label: labels.progressTracker.tabs.skillsOverview.skillLevels,
           data: Object.values(progress.skillLevels).map(value => Math.round(value * 100)),
           backgroundColor: 'rgba(46, 49, 146, 0.2)',
           borderColor: theme.palette.primary.main,
@@ -188,7 +138,6 @@ const ProgressTracker = ({ userId }) => {
     };
   };
 
-  // Create progress bar chart data
   const createProgressBarData = () => {
     if (!progress || !progress.recentProgress) return null;
     
@@ -199,7 +148,7 @@ const ProgressTracker = ({ userId }) => {
       }),
       datasets: [
         {
-          label: 'Vocabulary Learned',
+          label: labels.progressTracker.tabs.recentActivity.chart.yAxis,
           data: progress.recentProgress.map(day => day.vocabularyLearned),
           backgroundColor: theme.palette.secondary.main,
           borderColor: theme.palette.secondary.dark,
@@ -209,19 +158,17 @@ const ProgressTracker = ({ userId }) => {
     };
   };
 
-  // Render loading state
   if (loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
         <CircularProgress size={60} sx={{ mb: 3 }} />
         <Typography variant="h6" color="text.secondary">
-          Loading progress data...
+          {labels.progressTracker.loading}
         </Typography>
       </Box>
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <Alert severity="error" sx={{ mb: 2 }}>
@@ -230,23 +177,21 @@ const ProgressTracker = ({ userId }) => {
     );
   }
 
-  // Render progress data
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Learning Progress
+          {labels.progressTracker.title}
         </Typography>
         <Button 
           startIcon={<Refresh />} 
           variant="outlined" 
           onClick={handleRefresh}
         >
-          Refresh
+          {labels.progressTracker.buttons.refresh}
         </Button>
       </Box>
       
-      {/* Progress Summary Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card sx={{ height: '100%' }}>
@@ -254,11 +199,11 @@ const ProgressTracker = ({ userId }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <School color="primary" sx={{ mr: 1 }} />
                 <Typography variant="h6" color="text.secondary">
-                  Level
+                  {labels.progressTracker.cards.level.title}
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ mb: 1, textTransform: 'capitalize' }}>
-                {progress?.level || 'Beginner'}
+                {progress?.level || labels.progressTracker.cards.level.beginner}
               </Typography>
               <LinearProgress 
                 variant="determinate" 
@@ -275,14 +220,14 @@ const ProgressTracker = ({ userId }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <Translate color="secondary" sx={{ mr: 1 }} />
                 <Typography variant="h6" color="text.secondary">
-                  Vocabulary
+                  {labels.progressTracker.cards.vocabulary.title}
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ mb: 1 }}>
                 {progress?.vocabularyMastered || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Words mastered
+                {labels.progressTracker.cards.vocabulary.subtitle}
               </Typography>
             </CardContent>
           </Card>
@@ -294,14 +239,14 @@ const ProgressTracker = ({ userId }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <LocalFireDepartment sx={{ mr: 1, color: theme.palette.warning.main }} />
                 <Typography variant="h6" color="text.secondary">
-                  Streak
+                  {labels.progressTracker.cards.streak.title}
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ mb: 1 }}>
                 {progress?.streakDays || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Consecutive days
+                {labels.progressTracker.cards.streak.subtitle}
               </Typography>
             </CardContent>
           </Card>
@@ -313,21 +258,20 @@ const ProgressTracker = ({ userId }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <TrendingUp sx={{ mr: 1, color: theme.palette.success.main }} />
                 <Typography variant="h6" color="text.secondary">
-                  Accuracy
+                  {labels.progressTracker.cards.accuracy.title}
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ mb: 1 }}>
                 {progress?.accuracy || 0}%
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Overall performance
+                {labels.progressTracker.cards.accuracy.subtitle}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
       
-      {/* Tabs for different progress views */}
       <Box sx={{ mb: 3 }}>
         <Tabs 
           value={tabValue} 
@@ -336,20 +280,19 @@ const ProgressTracker = ({ userId }) => {
           scrollButtons="auto"
           sx={{ borderBottom: 1, borderColor: 'divider' }}
         >
-          <Tab label="Skills Overview" icon={<BarChart />} iconPosition="start" />
-          <Tab label="Recent Activity" icon={<TrendingUp />} iconPosition="start" />
-          <Tab label="Recommendations" icon={<Lightbulb />} iconPosition="start" />
-          <Tab label="Achievements" icon={<EmojiEvents />} iconPosition="start" />
+          <Tab label={labels.progressTracker.tabs.skillsOverview.label} icon={<BarChart />} iconPosition="start" />
+          <Tab label={labels.progressTracker.tabs.recentActivity.label} icon={<TrendingUp />} iconPosition="start" />
+          <Tab label={labels.progressTracker.tabs.recommendations.label} icon={<Lightbulb />} iconPosition="start" />
+          <Tab label={labels.progressTracker.tabs.achievements.label} icon={<EmojiEvents />} iconPosition="start" />
         </Tabs>
       </Box>
       
-      {/* Skills Overview Tab */}
       {tabValue === 0 && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             <Paper elevation={1} sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" gutterBottom>
-                Skill Levels
+                {labels.progressTracker.tabs.skillsOverview.skillLevels}
               </Typography>
               <Box sx={{ height: 350 }}>
                 {progress && <Radar data={createSkillRadarData()} options={{
@@ -375,7 +318,7 @@ const ProgressTracker = ({ userId }) => {
           <Grid item xs={12} md={6}>
             <Paper elevation={1} sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" gutterBottom>
-                Skill Breakdown
+                {labels.progressTracker.tabs.skillsOverview.skillBreakdown}
               </Typography>
               <List>
                 {progress && Object.entries(progress.skillLevels).map(([skill, level]) => (
@@ -402,7 +345,9 @@ const ProgressTracker = ({ userId }) => {
                               {Math.round(level * 100)}%
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {level < 0.3 ? 'Beginner' : level < 0.6 ? 'Intermediate' : 'Advanced'}
+                              {level < 0.3 ? labels.progressTracker.tabs.skillsOverview.levels.beginner : 
+                               level < 0.6 ? labels.progressTracker.tabs.skillsOverview.levels.intermediate : 
+                               labels.progressTracker.tabs.skillsOverview.levels.advanced}
                             </Typography>
                           </Box>
                         </Box>
@@ -416,13 +361,12 @@ const ProgressTracker = ({ userId }) => {
         </Grid>
       )}
       
-      {/* Recent Activity Tab */}
       {tabValue === 1 && (
         <Grid container spacing={3}>
           <Grid item xs={12} md={8}>
             <Paper elevation={1} sx={{ p: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Weekly Progress
+                {labels.progressTracker.tabs.recentActivity.weeklyProgress}
               </Typography>
               <Box sx={{ height: 350 }}>
                 {progress && <Bar data={createProgressBarData()} options={{
@@ -433,7 +377,7 @@ const ProgressTracker = ({ userId }) => {
                       beginAtZero: true,
                       title: {
                         display: true,
-                        text: 'Vocabulary Words'
+                        text: labels.progressTracker.tabs.recentActivity.chart.yAxis
                       }
                     }
                   },
@@ -443,7 +387,7 @@ const ProgressTracker = ({ userId }) => {
                     },
                     title: {
                       display: true,
-                      text: 'Vocabulary Learned This Week'
+                      text: labels.progressTracker.tabs.recentActivity.chart.title
                     }
                   }
                 }} />}
@@ -454,7 +398,7 @@ const ProgressTracker = ({ userId }) => {
           <Grid item xs={12} md={4}>
             <Paper elevation={1} sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" gutterBottom>
-                Activity Summary
+                {labels.progressTracker.tabs.recentActivity.activitySummary}
               </Typography>
               <List>
                 <ListItem>
@@ -462,7 +406,7 @@ const ProgressTracker = ({ userId }) => {
                     <School color="primary" />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="Total Sessions" 
+                    primary={labels.progressTracker.tabs.recentActivity.summary.totalSessions} 
                     secondary={progress?.totalSessions || 0}
                   />
                 </ListItem>
@@ -471,7 +415,7 @@ const ProgressTracker = ({ userId }) => {
                     <Timer color="secondary" />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="Total Time Spent" 
+                    primary={labels.progressTracker.tabs.recentActivity.summary.totalTime} 
                     secondary={formatDuration(progress?.totalTimeSpent || 0)}
                   />
                 </ListItem>
@@ -480,7 +424,7 @@ const ProgressTracker = ({ userId }) => {
                     <Translate sx={{ color: theme.palette.info.main }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="Vocabulary Mastered" 
+                    primary={labels.progressTracker.tabs.recentActivity.summary.vocabularyMastered} 
                     secondary={progress?.vocabularyMastered || 0}
                   />
                 </ListItem>
@@ -489,7 +433,7 @@ const ProgressTracker = ({ userId }) => {
                     <Psychology sx={{ color: theme.palette.success.main }} />
                   </ListItemIcon>
                   <ListItemText 
-                    primary="Grammar Concepts Mastered" 
+                    primary={labels.progressTracker.tabs.recentActivity.summary.grammarMastered} 
                     secondary={progress?.grammarMastered || 0}
                   />
                 </ListItem>
@@ -499,7 +443,6 @@ const ProgressTracker = ({ userId }) => {
         </Grid>
       )}
       
-      {/* Recommendations Tab */}
       {tabValue === 2 && (
         <Grid container spacing={3}>
           {progress?.recommendations?.map((recommendation, index) => (
@@ -548,7 +491,6 @@ const ProgressTracker = ({ userId }) => {
         </Grid>
       )}
       
-      {/* Achievements Tab */}
       {tabValue === 3 && (
         <Grid container spacing={3}>
           {progress?.achievements?.map((achievement, index) => (

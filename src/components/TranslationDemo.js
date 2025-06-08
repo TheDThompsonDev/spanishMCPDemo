@@ -29,16 +29,16 @@ import {
   SwapHoriz, 
   Info,
   History,
-  Code,
   Close
 } from '@mui/icons-material';
 import axios from 'axios';
-import ReactJson from 'react-json-view';
+import JsonView from '@uiw/react-json-view';
+import { labels } from '../labels';
 
 const TranslationDemo = ({ userId, sessionId }) => {
   const [sourceText, setSourceText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
-  const [direction, setDirection] = useState('english-to-spanish'); // or 'spanish-to-english'
+  const [direction, setDirection] = useState('english-to-spanish');
   const [contextType, setContextType] = useState('mixed');
   const [loading, setLoading] = useState(false);
   const [context, setContext] = useState(null);
@@ -49,7 +49,6 @@ const TranslationDemo = ({ userId, sessionId }) => {
   const [showJson, setShowJson] = useState(false);
   const [apiResponse, setApiResponse] = useState(null);
 
-  // Reset error message after 5 seconds
   useEffect(() => {
     if (error) {
       setShowError(true);
@@ -75,27 +74,23 @@ const TranslationDemo = ({ userId, sessionId }) => {
       return response.data;
     } catch (err) {
       console.error('Error fetching context:', err);
-      setError('Failed to fetch context: ' + (err.response?.data?.message || err.message));
+      setError(labels.translation.errors.fetchContext + (err.response?.data?.message || err.message));
       return null;
     }
   };
 
   const handleTranslate = async () => {
     if (!sourceText.trim()) {
-      setError('Please enter text to translate');
+      setError(labels.translation.errors.emptyText);
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      // First, get context
-      const contextData = await fetchContext();
-
-      // Determine target language
+      await fetchContext();
       const targetLanguage = direction === 'english-to-spanish' ? 'spanish' : 'english';
 
-      // Perform translation
       const response = await axios.post('/api/translate', {
         text: sourceText,
         targetLanguage,
@@ -107,35 +102,34 @@ const TranslationDemo = ({ userId, sessionId }) => {
       setTranslatedText(response.data.translatedText);
       setApiResponse(response.data);
       
-      // Add to translation history
       setTranslations([
         {
           original: sourceText,
           translated: response.data.translatedText,
           direction,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          aiGenerated: response.data.aiGenerated,
+          model: response.data.model
         },
-        ...translations.slice(0, 4) // Keep last 5 translations
+        ...translations.slice(0, 4)
       ]);
 
     } catch (err) {
       console.error('Translation error:', err);
-      setError('Translation failed: ' + (err.response?.data?.message || err.message));
+      setError(labels.translation.errors.translation + (err.response?.data?.message || err.message));
     } finally {
       setLoading(false);
     }
   };
 
-  // Function to highlight key phrases in context
   const highlightContext = (contextContent) => {
     if (!contextContent || !sourceText) return contextContent;
     
-    // Simplified highlighting - in a real app, this would be more sophisticated
     const words = sourceText.toLowerCase().split(/\s+/);
     let highlightedContent = contextContent;
     
     words.forEach(word => {
-      if (word.length > 3) { // Only highlight meaningful words
+      if (word.length > 3) {
         const regex = new RegExp(`\\b${word}\\b`, 'gi');
         highlightedContent = highlightedContent.replace(
           regex, 
@@ -169,7 +163,6 @@ const TranslationDemo = ({ userId, sessionId }) => {
       </Collapse>
 
       <Grid container spacing={3}>
-        {/* Left side - Translation input/output */}
         <Grid item xs={12} md={7}>
           <Paper 
             elevation={2} 
@@ -182,7 +175,9 @@ const TranslationDemo = ({ userId, sessionId }) => {
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                {direction === 'english-to-spanish' ? 'English → Spanish' : 'Spanish → English'}
+                {direction === 'english-to-spanish' 
+                  ? labels.translation.directions.englishToSpanish 
+                  : labels.translation.directions.spanishToEnglish}
               </Typography>
               
               <Button 
@@ -191,12 +186,12 @@ const TranslationDemo = ({ userId, sessionId }) => {
                 onClick={handleDirectionChange}
                 size="small"
               >
-                Swap
+                {labels.translation.buttons.swap}
               </Button>
             </Box>
             
             <TextField
-              label="Enter text to translate"
+              label={labels.translation.labels.input}
               multiline
               rows={4}
               value={sourceText}
@@ -208,18 +203,16 @@ const TranslationDemo = ({ userId, sessionId }) => {
             
             <Box sx={{ display: 'flex', mb: 2 }}>
               <FormControl sx={{ minWidth: 200, mr: 2 }}>
-                <InputLabel>Context Type</InputLabel>
+                <InputLabel>{labels.translation.labels.contextType}</InputLabel>
                 <Select
                   value={contextType}
-                  label="Context Type"
+                  label={labels.translation.labels.contextType}
                   onChange={(e) => setContextType(e.target.value)}
                   size="small"
                 >
-                  <MenuItem value="mixed">Mixed</MenuItem>
-                  <MenuItem value="vocabulary">Vocabulary</MenuItem>
-                  <MenuItem value="grammar">Grammar</MenuItem>
-                  <MenuItem value="conversation">Conversation</MenuItem>
-                  <MenuItem value="personalized">Personalized</MenuItem>
+                  {labels.contextTypes.types.map(type => (
+                    <MenuItem key={type.name} value={type.name}>{type.name}</MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               
@@ -230,12 +223,12 @@ const TranslationDemo = ({ userId, sessionId }) => {
                 disabled={loading || !sourceText.trim()}
                 sx={{ flexGrow: 1 }}
               >
-                Translate
+                {labels.translation.buttons.translate}
               </Button>
             </Box>
             
             <Typography variant="subtitle1" gutterBottom>
-              Translation Result:
+              {labels.translation.labels.result}
             </Typography>
             
             <Card variant="outlined" sx={{ flexGrow: 1, mb: 2, bgcolor: '#f5f5f5' }}>
@@ -246,7 +239,7 @@ const TranslationDemo = ({ userId, sessionId }) => {
                   </Box>
                 ) : (
                   <Typography variant="body1">
-                    {translatedText || 'Translation will appear here'}
+                    {translatedText || labels.translation.labels.placeholder}
                   </Typography>
                 )}
               </CardContent>
@@ -261,7 +254,7 @@ const TranslationDemo = ({ userId, sessionId }) => {
                     color="primary"
                   />
                 }
-                label="Show Context"
+                label={labels.translation.labels.showContext}
               />
               
               <FormControlLabel
@@ -272,21 +265,21 @@ const TranslationDemo = ({ userId, sessionId }) => {
                     color="primary"
                   />
                 }
-                label="Show API Response"
+                label={labels.translation.labels.showApiResponse}
               />
             </Box>
             
             {showJson && apiResponse && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
-                  API Response:
+                  {labels.translation.labels.apiResponse}
                 </Typography>
                 <Paper variant="outlined" sx={{ p: 1, maxHeight: 200, overflow: 'auto' }}>
-                  <ReactJson 
-                    src={apiResponse} 
+                  <JsonView 
+                    value={apiResponse} 
                     collapsed={2} 
                     displayDataTypes={false}
-                    name={false}
+                    displayObjectSize={false}
                   />
                 </Paper>
               </Box>
@@ -294,7 +287,6 @@ const TranslationDemo = ({ userId, sessionId }) => {
           </Paper>
         </Grid>
         
-        {/* Right side - Context and History */}
         <Grid item xs={12} md={5}>
           <Paper 
             elevation={2} 
@@ -305,16 +297,15 @@ const TranslationDemo = ({ userId, sessionId }) => {
               flexDirection: 'column'
             }}
           >
-            {/* Context Panel */}
             {showContext && (
               <>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Info color="primary" sx={{ mr: 1 }} />
                   <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                    Context ({contextType})
+                    {`${labels.translation.labels.context} (${contextType})`}
                   </Typography>
                   <Chip 
-                    label={context ? 'Retrieved' : 'Not Loaded'} 
+                    label={context ? labels.translation.labels.retrieved : labels.translation.labels.notLoaded} 
                     color={context ? 'success' : 'default'} 
                     size="small" 
                   />
@@ -338,18 +329,17 @@ const TranslationDemo = ({ userId, sessionId }) => {
                     />
                   ) : (
                     <Typography variant="body2" color="textSecondary">
-                      Context will be displayed here after translation
+                      {labels.translation.labels.contextPlaceholder}
                     </Typography>
                   )}
                 </Paper>
               </>
             )}
             
-            {/* Translation History */}
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
               <History color="primary" sx={{ mr: 1 }} />
               <Typography variant="h6">
-                Translation History
+                {labels.translation.labels.history}
               </Typography>
             </Box>
             
@@ -389,16 +379,26 @@ const TranslationDemo = ({ userId, sessionId }) => {
                         }
                         secondary={
                           <>
-                            <Typography
-                              component="span"
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: 'block' }}
-                            >
-                              {item.direction === 'english-to-spanish' ? 'EN → ES' : 'ES → EN'} • {
-                                new Date(item.timestamp).toLocaleTimeString()
-                              }
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {item.direction === 'english-to-spanish' 
+                                  ? labels.translation.directions.englishToSpanish 
+                                  : labels.translation.directions.spanishToEnglish} • {
+                                  new Date(item.timestamp).toLocaleTimeString()
+                                }
+                              </Typography>
+                              <Chip
+                                label={item.aiGenerated ? `🤖 ${item.model}` : '📝 Fallback'}
+                                size="small"
+                                color={item.aiGenerated ? 'success' : 'default'}
+                                variant="outlined"
+                                sx={{ height: 18, fontSize: '0.7rem' }}
+                              />
+                            </Box>
                           </>
                         }
                       />
@@ -409,8 +409,8 @@ const TranslationDemo = ({ userId, sessionId }) => {
               ) : (
                 <ListItem>
                   <ListItemText
-                    primary="No translations yet"
-                    secondary="Translated items will appear here"
+                    primary={labels.translation.labels.noTranslations}
+                    secondary={labels.translation.labels.noTranslationsDesc}
                   />
                 </ListItem>
               )}
@@ -423,4 +423,3 @@ const TranslationDemo = ({ userId, sessionId }) => {
 };
 
 export default TranslationDemo;
-

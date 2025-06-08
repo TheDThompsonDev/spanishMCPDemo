@@ -19,55 +19,30 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  LinearProgress,
-  Badge,
-  Stack,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
-  Tooltip,
-  Timeline,
-  TimelineItem,
-  TimelineContent,
-  TimelineSeparator,
-  TimelineConnector,
-  TimelineDot,
 } from '@mui/material';
 import {
   PlayArrow,
   Stop,
-  Refresh,
-  Check,
-  Close,
   Info,
   QuestionAnswer,
   TextSnippet,
   Timer,
   QueryStats,
-  Warning,
   Error as ErrorIcon,
-  BarChart,
   DataUsage,
-  Add,
   LightbulbOutlined
 } from '@mui/icons-material';
 import axios from 'axios';
 import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
+import { labels } from '../labels';
 
-// Register ChartJS components
 ChartJS.register(ArcElement, ChartTooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
-
-const SESSION_TYPES = [
-  { value: 'general', label: 'General Learning', description: 'General Spanish learning session' },
-  { value: 'vocabulary', label: 'Vocabulary Practice', description: 'Focus on vocabulary acquisition' },
-  { value: 'grammar', label: 'Grammar Practice', description: 'Focus on grammar rules and usage' },
-  { value: 'conversation', label: 'Conversation Practice', description: 'Practice speaking and listening skills' },
-  { value: 'assessment', label: 'Skill Assessment', description: 'Evaluate current Spanish proficiency' }
-];
 
 const ACTIVITY_ICONS = {
   context: <Info color="primary" />,
@@ -102,37 +77,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
   const [simulateActivity, setSimulateActivity] = useState(false);
   const simulationRef = useRef(null);
 
-  // Clean up the refresh interval when component unmounts
-  useEffect(() => {
-    return () => {
-      if (refreshInterval) clearInterval(refreshInterval);
-      if (simulationRef.current) clearInterval(simulationRef.current);
-    };
-  }, [refreshInterval]);
-
-  // Fetch session details on active session change
-  useEffect(() => {
-    if (activeSession) {
-      fetchSessionDetails();
-      
-      // Set up a refresh interval
-      const interval = setInterval(() => {
-        fetchSessionDetails();
-      }, 5000); // Refresh every 5 seconds
-      
-      setRefreshInterval(interval);
-      
-      return () => clearInterval(interval);
-    } else {
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-        setRefreshInterval(null);
-      }
-    }
-  }, [activeSession]);
-
-  // Fetch session details from the server
-  const fetchSessionDetails = async () => {
+  const fetchSessionDetails = React.useCallback(async () => {
     if (!activeSession) return;
     
     try {
@@ -142,25 +87,41 @@ const SessionManager = ({ userId, onSessionCreated }) => {
         }
       });
       
-      // Update session data
       if (response.data.session) {
         setSessionActivities(response.data.session.activities || []);
-        
-        // Update stats
         updateSessionStats(response.data.session);
       }
     } catch (err) {
       console.error('Error fetching session details:', err);
-      
-      // Don't set error as this is a background refresh
       if (err.response?.status === 404) {
-        // Session might have ended
         setActiveSession(null);
       }
     }
-  };
+  }, [activeSession, userId]);
 
-  // Update session statistics
+  useEffect(() => {
+    return () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+      if (simulationRef.current) clearInterval(simulationRef.current);
+    };
+  }, [refreshInterval]);
+
+  useEffect(() => {
+    if (activeSession) {
+      fetchSessionDetails();
+      const interval = setInterval(() => {
+        fetchSessionDetails();
+      }, 5000);
+      setRefreshInterval(interval);
+      return () => clearInterval(interval);
+    } else {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        setRefreshInterval(null);
+      }
+    }
+  }, [activeSession, refreshInterval, fetchSessionDetails]);
+
   const updateSessionStats = (session) => {
     if (!session) return;
     
@@ -177,7 +138,6 @@ const SessionManager = ({ userId, onSessionCreated }) => {
       incorrectAnswers: session.incorrectAnswers || 0
     });
     
-    // Update skill progress from session or use default values
     setSkillProgress(session.skillsProgress || {
       vocabulary: session.type === 'vocabulary' ? 0.6 : 0.2,
       grammar: session.type === 'grammar' ? 0.7 : 0.3,
@@ -186,7 +146,6 @@ const SessionManager = ({ userId, onSessionCreated }) => {
     });
   };
 
-  // Start a new learning session
   const startSession = async () => {
     setLoading(true);
     setError('');
@@ -209,25 +168,22 @@ const SessionManager = ({ userId, onSessionCreated }) => {
       
       setActiveSession(newSession);
       
-      // Notify parent component
       if (onSessionCreated) {
         onSessionCreated(response.data.sessionId);
       }
       
-      // Start simulated activity if needed (for demo purposes)
       if (simulateActivity) {
         startActivitySimulation(response.data.sessionId);
       }
       
     } catch (err) {
       console.error('Error starting session:', err);
-      setError('Failed to start session: ' + (err.response?.data?.error || err.message));
+      setError(labels.sessionManager.labels.errors.startFailed + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
   };
 
-  // End the current session
   const endSession = async () => {
     if (!activeSession) return;
     
@@ -243,13 +199,11 @@ const SessionManager = ({ userId, onSessionCreated }) => {
         }
       });
       
-      // Stop simulation if running
       if (simulationRef.current) {
         clearInterval(simulationRef.current);
         simulationRef.current = null;
       }
       
-      // Update with final stats
       updateSessionStats({
         ...activeSession,
         endTime: new Date().toISOString(),
@@ -257,19 +211,17 @@ const SessionManager = ({ userId, onSessionCreated }) => {
         score: response.data.score
       });
       
-      // Clear active session
       setActiveSession(null);
       
     } catch (err) {
       console.error('Error ending session:', err);
-      setError('Failed to end session: ' + (err.response?.data?.error || err.message));
+      setError(labels.sessionManager.labels.errors.endFailed + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
       setConfirmEndDialog(false);
     }
   };
 
-  // Start simulated activity for demo purposes
   const startActivitySimulation = (sessionId) => {
     if (simulationRef.current) {
       clearInterval(simulationRef.current);
@@ -282,7 +234,6 @@ const SessionManager = ({ userId, onSessionCreated }) => {
       count++;
       const activityType = activityTypes[count % activityTypes.length];
       
-      // Add a simulated activity
       const newActivity = {
         type: activityType,
         timestamp: new Date().toISOString()
@@ -298,34 +249,29 @@ const SessionManager = ({ userId, onSessionCreated }) => {
       
       setSessionActivities(prev => [...prev, newActivity]);
       
-      // Update stats
       setSessionStats(prev => ({
         ...prev,
         activityCount: prev.activityCount + 1
       }));
       
-      // Stop after 20 activities
       if (count >= 20) {
         clearInterval(simulationRef.current);
         simulationRef.current = null;
       }
-    }, 3000); // Add a new activity every 3 seconds
+    }, 3000);
   };
 
-  // Format time duration as MM:SS
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Format timestamp to HH:MM:SS
   const formatTimestamp = (isoString) => {
     const date = new Date(isoString);
     return date.toLocaleTimeString();
   };
 
-  // Create chart data for activity breakdown
   const createActivityChartData = () => {
     const activityCounts = sessionActivities.reduce((acc, activity) => {
       acc[activity.type] = (acc[activity.type] || 0) + 1;
@@ -340,11 +286,11 @@ const SessionManager = ({ userId, onSessionCreated }) => {
         {
           data: Object.values(activityCounts),
           backgroundColor: [
-            '#2196f3', // context
-            '#ff9800', // query
-            '#4caf50', // response
-            '#f44336', // error
-            '#9c27b0'  // other
+            '#2196f3',
+            '#ff9800',
+            '#4caf50',
+            '#f44336',
+            '#9c27b0'
           ],
           borderWidth: 1
         }
@@ -352,7 +298,6 @@ const SessionManager = ({ userId, onSessionCreated }) => {
     };
   };
 
-  // Create chart data for skill progress
   const createSkillChartData = () => {
     return {
       labels: Object.keys(skillProgress).map(skill => 
@@ -360,7 +305,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
       ),
       datasets: [
         {
-          label: 'Skill Progress',
+          label: labels.sessionManager.labels.skillProgress.title,
           data: Object.values(skillProgress).map(value => Math.round(value * 100)),
           backgroundColor: [
             'rgba(75, 192, 192, 0.6)',
@@ -389,20 +334,19 @@ const SessionManager = ({ userId, onSessionCreated }) => {
       )}
       
       <Grid container spacing={3}>
-        {/* Session Control Panel */}
         <Grid item xs={12} md={4}>
           <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom>
-              Session Control
+              {labels.sessionManager.labels.sessionControl}
             </Typography>
             
             {!activeSession ? (
               <>
                 <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel>Session Type</InputLabel>
+                  <InputLabel>{labels.sessionManager.labels.sessionType}</InputLabel>
                   <Select
                     value={sessionType}
-                    label="Session Type"
+                    label={labels.sessionManager.labels.sessionType}
                     onChange={(e) => {
                       setSessionType(e.target.value);
                       setShowLessonIdInput(
@@ -412,7 +356,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                     }}
                     disabled={loading}
                   >
-                    {SESSION_TYPES.map(type => (
+                    {labels.sessionManager.sessionTypes.map(type => (
                       <MenuItem key={type.value} value={type.value}>
                         {type.label}
                       </MenuItem>
@@ -422,19 +366,19 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 
                 {showLessonIdInput && (
                   <TextField
-                    label="Lesson ID (Optional)"
+                    label={labels.sessionManager.labels.lessonId.label}
                     fullWidth
                     value={lessonId}
                     onChange={(e) => setLessonId(e.target.value)}
                     sx={{ mb: 2 }}
                     disabled={loading}
-                    helperText="Enter specific lesson ID if available"
+                    helperText={labels.sessionManager.labels.lessonId.helper}
                   />
                 )}
                 
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" gutterBottom>
-                    {SESSION_TYPES.find(t => t.value === sessionType)?.description || ''}
+                    {labels.sessionManager.sessionTypes.find(t => t.value === sessionType)?.description || ''}
                   </Typography>
                 </Box>
                 
@@ -447,18 +391,16 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                     onClick={startSession}
                     disabled={loading}
                   >
-                    Start Session
+                    {labels.sessionManager.labels.buttons.start}
                   </Button>
                 </Box>
                 
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Tooltip title="For demo purposes only - generates simulated activities">
-                    <Typography variant="body2" sx={{ mr: 1 }}>
-                      Simulate Activity
-                    </Typography>
-                  </Tooltip>
+                  <Typography variant="body2" sx={{ mr: 1 }}>
+                    {labels.sessionManager.labels.simulateActivity.label}
+                  </Typography>
                   <Chip 
-                    label={simulateActivity ? "On" : "Off"}
+                    label={simulateActivity ? labels.sessionManager.labels.simulateActivity.on : labels.sessionManager.labels.simulateActivity.off}
                     color={simulateActivity ? "success" : "default"}
                     onClick={() => setSimulateActivity(!simulateActivity)}
                     size="small"
@@ -470,16 +412,16 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 <Card variant="outlined" sx={{ mb: 2 }}>
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Active Session
+                      {labels.sessionManager.labels.activeSession.title}
                     </Typography>
                     <Typography variant="h5" component="div">
-                      {SESSION_TYPES.find(t => t.value === activeSession.type)?.label || activeSession.type}
+                      {labels.sessionManager.sessionTypes.find(t => t.value === activeSession.type)?.label || activeSession.type}
                     </Typography>
                     <Typography color="text.secondary">
-                      ID: {activeSession.sessionId.substring(0, 12)}...
+                      {labels.sessionManager.labels.activeSession.id}{activeSession.sessionId.substring(0, 12)}...
                     </Typography>
                     <Typography variant="body2">
-                      Started: {new Date(activeSession.startTime).toLocaleTimeString()}
+                      {labels.sessionManager.labels.activeSession.started}{new Date(activeSession.startTime).toLocaleTimeString()}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -487,7 +429,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 <Card variant="outlined" sx={{ mb: 2 }}>
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Session Duration
+                      {labels.sessionManager.labels.duration.title}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Timer sx={{ mr: 1, color: 'primary.main' }} />
@@ -501,7 +443,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 <Card variant="outlined" sx={{ mb: 2 }}>
                   <CardContent>
                     <Typography color="text.secondary" gutterBottom>
-                      Activity Count
+                      {labels.sessionManager.labels.activityCount.title}
                     </Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <QueryStats sx={{ mr: 1, color: 'primary.main' }} />
@@ -520,27 +462,26 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                   onClick={() => setConfirmEndDialog(true)}
                   disabled={loading}
                 >
-                  End Session
+                  {labels.sessionManager.labels.buttons.end}
                 </Button>
               </>
             )}
           </Paper>
         </Grid>
         
-        {/* Session Activity & Visualization */}
         <Grid item xs={12} md={8}>
           <Paper elevation={2} sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" gutterBottom>
-              Session Activity
+              {labels.sessionManager.labels.activity.title}
             </Typography>
             
             {!activeSession ? (
               <Box sx={{ p: 4, textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                  No active session. Start a session to track learning activities.
+                  {labels.sessionManager.labels.activity.noSession.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Sessions help maintain context across interactions and track progress.
+                  {labels.sessionManager.labels.activity.noSession.description}
                 </Typography>
               </Box>
             ) : (
@@ -548,7 +489,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 <Box sx={{ display: 'flex', mb: 2 }}>
                   <Chip 
                     icon={<DataUsage />}
-                    label={`${sessionActivities.length} Activities`}
+                    label={`${sessionActivities.length}${labels.sessionManager.labels.activity.count}`}
                     color="primary"
                     variant="outlined"
                     sx={{ mr: 1 }}
@@ -556,12 +497,11 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 </Box>
                 
                 <Grid container spacing={2} sx={{ mb: 2 }}>
-                  {/* Activity breakdown chart */}
                   <Grid item xs={12} md={6}>
                     <Card variant="outlined" sx={{ height: '100%' }}>
                       <CardContent>
                         <Typography variant="subtitle1" gutterBottom>
-                          Activity Breakdown
+                          {labels.sessionManager.labels.activity.breakdown}
                         </Typography>
                         <Box sx={{ height: 200, display: 'flex', justifyContent: 'center' }}>
                           {sessionActivities.length > 0 ? (
@@ -579,7 +519,7 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                           ) : (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <Typography variant="body2" color="text.secondary">
-                                No activities yet
+                                {labels.sessionManager.labels.activity.noActivities}
                               </Typography>
                             </Box>
                           )}
@@ -588,12 +528,11 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                     </Card>
                   </Grid>
                   
-                  {/* Skill progress chart */}
                   <Grid item xs={12} md={6}>
                     <Card variant="outlined" sx={{ height: '100%' }}>
                       <CardContent>
                         <Typography variant="subtitle1" gutterBottom>
-                          Skill Progress
+                          {labels.sessionManager.labels.skillProgress.title}
                         </Typography>
                         <Box sx={{ height: 200 }}>
                           <Bar 
@@ -623,51 +562,61 @@ const SessionManager = ({ userId, onSessionCreated }) => {
                 <Divider sx={{ my: 2 }} />
                 
                 <Typography variant="subtitle1" gutterBottom>
-                  Activity Timeline
+                  {labels.sessionManager.labels.activity.timeline}
                 </Typography>
                 
                 <Box sx={{ flexGrow: 1, overflow: 'auto', maxHeight: 300 }}>
                   {sessionActivities.length === 0 ? (
                     <Alert severity="info">
-                      No activities yet. Interact with the system to generate activity.
+                      {labels.sessionManager.labels.activity.noActivitiesYet}
                     </Alert>
                   ) : (
-                    <Timeline position="alternate">
+                    <List>
                       {sessionActivities.slice().reverse().map((activity, index) => (
-                        <TimelineItem key={index}>
-                          <TimelineSeparator>
-                            <TimelineDot color={
-                              activity.type === 'error' ? 'error' :
-                              activity.type === 'query' ? 'secondary' :
-                              activity.type === 'response' ? 'success' :
-                              'primary'
-                            }>
+                        <ListItem key={index} sx={{ mb: 2 }}>
+                          <ListItemIcon>
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                bgcolor: activity.type === 'error' ? 'error.main' :
+                                         activity.type === 'query' ? 'secondary.main' :
+                                         activity.type === 'response' ? 'success.main' :
+                                         'primary.main',
+                                color: 'white'
+                              }}
+                            >
                               {ACTIVITY_ICONS[activity.type] || <Info />}
-                            </TimelineDot>
-                            {index < sessionActivities.length - 1 && <TimelineConnector />}
-                          </TimelineSeparator>
-                          <TimelineContent>
-                            <Typography variant="subtitle2">
-                              {activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
-                            </Typography>
-                            <Typography variant="body2">
-                              {activity.type === 'query' ? (
-                                activity.query?.substring(0, 50) + (activity.query?.length > 50 ? '...' : '')
-                              ) : activity.type === 'response' ? (
-                                activity.response?.substring(0, 50) + (activity.response?.length > 50 ? '...' : '')
-                              ) : activity.type === 'context' ? (
-                                `Context type: ${activity.contextType || 'mixed'}`
-                              ) : (
-                                activity.error || activity.details || 'Activity logged'
-                              )}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {formatTimestamp(activity.timestamp)}
-                            </Typography>
-                          </TimelineContent>
-                        </TimelineItem>
+                            </Box>
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={activity.type.charAt(0).toUpperCase() + activity.type.slice(1)}
+                            secondary={
+                              <>
+                                <Typography variant="body2" component="div">
+                                  {activity.type === 'query' ? (
+                                    activity.query?.substring(0, 50) + (activity.query?.length > 50 ? '...' : '')
+                                  ) : activity.type === 'response' ? (
+                                    activity.response?.substring(0, 50) + (activity.response?.length > 50 ? '...' : '')
+                                  ) : activity.type === 'context' ? (
+                                    `Context type: ${activity.contextType || 'mixed'}`
+                                  ) : (
+                                    activity.error || activity.details || labels.sessionManager.labels.activity.logged
+                                  )}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatTimestamp(activity.timestamp)}
+                                </Typography>
+                              </>
+                            }
+                          />
+                        </ListItem>
                       ))}
-                    </Timeline>
+                    </List>
                   )}
                 </Box>
               </>
@@ -676,21 +625,20 @@ const SessionManager = ({ userId, onSessionCreated }) => {
         </Grid>
       </Grid>
       
-      {/* Confirm end session dialog */}
       <Dialog
         open={confirmEndDialog}
         onClose={() => setConfirmEndDialog(false)}
       >
-        <DialogTitle>End Learning Session?</DialogTitle>
+        <DialogTitle>{labels.sessionManager.labels.endDialog.title}</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to end this learning session? All progress will be saved.
+            {labels.sessionManager.labels.endDialog.message}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmEndDialog(false)}>Cancel</Button>
+          <Button onClick={() => setConfirmEndDialog(false)}>{labels.sessionManager.labels.buttons.cancel}</Button>
           <Button onClick={endSession} color="error" autoFocus>
-            End Session
+            {labels.sessionManager.labels.buttons.end}
           </Button>
         </DialogActions>
       </Dialog>
@@ -699,4 +647,3 @@ const SessionManager = ({ userId, onSessionCreated }) => {
 };
 
 export default SessionManager;
-

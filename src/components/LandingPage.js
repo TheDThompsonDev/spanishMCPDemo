@@ -7,7 +7,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CardMedia,
   Divider,
   Paper,
   Stepper,
@@ -15,10 +14,7 @@ import {
   StepLabel,
   StepContent,
   Chip,
-  IconButton,
-  Tooltip,
   useTheme,
-  useMediaQuery,
   Fade,
   Zoom,
 } from '@mui/material';
@@ -28,121 +24,49 @@ import {
   School,
   QueryStats,
   Api,
-  Code,
-  ArrowForward,
   ExpandMore,
   ExpandLess,
-  Info,
-  Lightbulb,
   PlayArrow,
 } from '@mui/icons-material';
+import { labels } from '../labels';
 
 const LandingPage = ({ onStartDemo }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [expandedSection, setExpandedSection] = useState(null);
 
   const toggleSection = (section) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // MCP features
   const mcpFeatures = [
     {
-      title: 'Context-Aware AI',
-      description: 'Provides relevant vocabulary, grammar, and learning materials as context to the AI model',
+      title: labels.features.items[0].title,
+      description: labels.features.items[0].description,
       icon: <Psychology fontSize="large" color="primary" />,
       color: theme.palette.primary.main,
     },
     {
-      title: 'Personalized Learning',
-      description: 'Adapts to user skill levels and learning progress',
+      title: labels.features.items[1].title,
+      description: labels.features.items[1].description,
       icon: <School fontSize="large" color="secondary" />,
       color: theme.palette.secondary.main,
     },
     {
-      title: 'Progress Tracking',
-      description: 'Tracks vocabulary mastery, grammar understanding, and overall learning progress',
+      title: labels.features.items[2].title,
+      description: labels.features.items[2].description,
       icon: <QueryStats fontSize="large" style={{ color: theme.palette.success.main }} />,
       color: theme.palette.success.main,
     },
     {
-      title: 'Translation Services',
-      description: 'Provides accurate translations with context-aware understanding',
+      title: labels.features.items[3].title,
+      description: labels.features.items[3].description,
       icon: <Translate fontSize="large" style={{ color: theme.palette.info.main }} />,
       color: theme.palette.info.main,
     },
   ];
 
-  // MCP protocol steps
-  const mcpProtocolSteps = [
-    {
-      label: 'Client Request',
-      description: 'Client sends a request to the MCP server with a prompt and optional parameters',
-      code: `POST /mcp/generate
-{
-  "prompt": "Translate to Spanish: Hello, how are you?",
-  "context_type": "vocabulary",
-  "model": "spanish-learning-model"
-}`
-    },
-    {
-      label: 'Context Retrieval',
-      description: 'MCP server retrieves or generates appropriate context based on the request',
-      code: `POST /mcp/context
-{
-  "context_type": "vocabulary",
-  "operation": "get",
-  "categories": ["greeting"],
-  "difficulty_level": "beginner"
-}`
-    },
-    {
-      label: 'AI Model Processing',
-      description: 'The AI model processes the request with the provided context',
-      code: `// Internal processing
-{
-  "model": "claude-3-opus-20240229",
-  "prompt": "<context>...</context>\\nTranslate to Spanish: Hello, how are you?",
-  "max_tokens": 1000
-}`
-    },
-    {
-      label: 'Response Generation',
-      description: 'MCP server returns the AI-generated response to the client',
-      code: `// Response
-{
-  "object": "generation",
-  "model": "spanish-learning-model",
-  "choices": [
-    {
-      "text": "Hola, ¿cómo estás?",
-      "finish_reason": "stop"
-    }
-  ],
-  "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 7,
-    "total_tokens": 17
-  }
-}`
-    },
-  ];
-
-  // Context types
-  const contextTypes = [
-    { name: 'vocabulary', color: '#4caf50', description: 'Spanish vocabulary with translations and examples' },
-    { name: 'grammar', color: '#2196f3', description: 'Spanish grammar rules and usage' },
-    { name: 'mixed', color: '#ff9800', description: 'Combined vocabulary and grammar' },
-    { name: 'conversation', color: '#9c27b0', description: 'Conversational phrases and patterns' },
-    { name: 'exercise', color: '#8bc34a', description: 'Practice exercises' },
-    { name: 'assessment', color: '#795548', description: 'Skill assessment materials' },
-    { name: 'personalized', color: '#f44336', description: 'Adaptive content based on user progress' },
-  ];
-
   return (
     <Box sx={{ pb: 8 }}>
-      {/* Hero Section */}
       <Paper 
         elevation={0} 
         sx={{ 
@@ -172,10 +96,10 @@ const LandingPage = ({ onStartDemo }) => {
               <Fade in={true} timeout={1000}>
                 <Box>
                   <Typography variant="h1" gutterBottom>
-                    Spanish Learning MCP
+                    {labels.hero.title}
                   </Typography>
                   <Typography variant="h5" sx={{ mb: 4, fontWeight: 400 }}>
-                    A powerful Model Context Protocol implementation for Spanish language learning
+                    {labels.hero.subtitle}
                   </Typography>
                   <Button 
                     variant="contained" 
@@ -190,7 +114,7 @@ const LandingPage = ({ onStartDemo }) => {
                       boxShadow: theme.shadows[8]
                     }}
                   >
-                    Start Interactive Demo
+                    {labels.hero.startDemo}
                   </Button>
                 </Box>
               </Fade>
@@ -220,7 +144,7 @@ const LandingPage = ({ onStartDemo }) => {
                     }}
                   >
                     <Typography variant="overline" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      MODEL CONTEXT PROTOCOL
+                      {labels.hero.modelContextProtocol}
                     </Typography>
                     <Box sx={{ mt: 2, mb: 3 }}>
                       <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontFamily: 'monospace' }}>
@@ -237,16 +161,12 @@ const LandingPage = ({ onStartDemo }) => {
                           color: 'rgba(255, 255, 255, 0.9)'
                         }}
                       >
-                        {`{
-  "prompt": "Translate: Hello",
-  "context_type": "vocabulary",
-  "model": "spanish-learning-model"
-}`}
+                        {labels.hero.requestExample}
                       </Box>
                     </Box>
                     <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.1)', my: 2 }} />
                     <Typography variant="overline" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-                      RESPONSE
+                      {labels.landingPage.hero.response}
                     </Typography>
                     <Box 
                       sx={{ 
@@ -259,12 +179,7 @@ const LandingPage = ({ onStartDemo }) => {
                         color: 'rgba(255, 255, 255, 0.9)'
                       }}
                     >
-                      {`{
-  "object": "generation",
-  "choices": [
-    { "text": "Hola" }
-  ]
-}`}
+                      {labels.hero.responseExample}
                     </Box>
                   </Box>
                 </Box>
@@ -275,14 +190,12 @@ const LandingPage = ({ onStartDemo }) => {
       </Paper>
 
       <Container maxWidth="lg">
-        {/* What is MCP Section */}
         <Box sx={{ mb: 8 }}>
           <Typography variant="h3" gutterBottom align="center">
-            What is Model Context Protocol?
+            {labels.mcpSection.title}
           </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
-            The Model Context Protocol (MCP) is a standardized way for applications to interact with AI models
-            by providing relevant context to enhance the quality and relevance of AI-generated responses.
+          <Typography variant="subtitle1" align="center" color="white" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
+            {labels.mcpSection.subtitle}
           </Typography>
           
           <Paper 
@@ -298,40 +211,32 @@ const LandingPage = ({ onStartDemo }) => {
             <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <Typography variant="h5" gutterBottom>
-                  How MCP Works
+                  {labels.mcpSection.howItWorks.title}
                 </Typography>
                 <Typography variant="body1" paragraph>
-                  MCP enables applications to provide specific context to AI models, making their responses more accurate and relevant.
-                  For language learning, this means providing vocabulary, grammar rules, and personalized content.
+                  {labels.mcpSection.howItWorks.description1}
                 </Typography>
                 <Typography variant="body1" paragraph>
-                  The protocol standardizes how context is provided, manipulated, and used across different AI models and applications.
+                  {labels.mcpSection.howItWorks.description2}
                 </Typography>
                 
                 <Box sx={{ mt: 3 }}>
                   <Typography variant="h6" gutterBottom>
-                    Key Benefits:
+                    {labels.mcpSection.howItWorks.benefits.title}
                   </Typography>
                   <Box component="ul" sx={{ pl: 2 }}>
-                    <Typography component="li" variant="body1" sx={{ mb: 1 }}>
-                      Enhanced AI responses with domain-specific knowledge
-                    </Typography>
-                    <Typography component="li" variant="body1" sx={{ mb: 1 }}>
-                      Standardized interface for context manipulation
-                    </Typography>
-                    <Typography component="li" variant="body1" sx={{ mb: 1 }}>
-                      Improved personalization and adaptation
-                    </Typography>
-                    <Typography component="li" variant="body1">
-                      Efficient context reuse and caching
-                    </Typography>
+                    {labels.mcpSection.howItWorks.benefits.items.map((item, index) => (
+                      <Typography key={index} component="li" variant="body1" sx={{ mb: index < labels.mcpSection.howItWorks.benefits.items.length - 1 ? 1 : 0 }}>
+                        {item}
+                      </Typography>
+                    ))}
                   </Box>
                 </Box>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Box sx={{ height: '100%' }}>
                   <Stepper orientation="vertical" nonLinear activeStep={-1}>
-                    {mcpProtocolSteps.map((step, index) => (
+                    {labels.mcpProtocolSteps.map((step, index) => (
                       <Step key={step.label} expanded>
                         <StepLabel>
                           <Typography variant="subtitle1" fontWeight={600}>
@@ -365,13 +270,12 @@ const LandingPage = ({ onStartDemo }) => {
           </Paper>
         </Box>
 
-        {/* Features Section */}
         <Box sx={{ mb: 8 }}>
           <Typography variant="h3" gutterBottom align="center">
-            Spanish Learning Features
+            {labels.features.title}
           </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
-            Our MCP implementation specializes in Spanish language learning with features designed to enhance the learning experience.
+          <Typography variant="subtitle1" align="center" color="white" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
+            {labels.features.subtitle}
           </Typography>
           
           <Grid container spacing={3}>
@@ -428,17 +332,16 @@ const LandingPage = ({ onStartDemo }) => {
           </Grid>
         </Box>
 
-        {/* Context Types Section */}
         <Box sx={{ mb: 8 }}>
           <Typography variant="h3" gutterBottom align="center">
-            Context Types
+            {labels.contextTypes.title}
           </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
-            The Spanish Learning MCP server supports multiple context types specifically designed for language learning.
+          <Typography variant="subtitle1" align="center" color="white" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
+            {labels.contextTypes.subtitle}
           </Typography>
           
           <Grid container spacing={2}>
-            {contextTypes.map((type, index) => (
+            {labels.contextTypes.types.map((type, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
                 <Paper 
                   elevation={1} 
@@ -463,7 +366,7 @@ const LandingPage = ({ onStartDemo }) => {
                       }} 
                     />
                     <Typography variant="subtitle1" fontWeight={600}>
-                      Context Type
+                      {labels.landingPage.contextTypes.contextTypeLabel}
                     </Typography>
                   </Box>
                   <Typography variant="body2" color="text.secondary">
@@ -475,191 +378,131 @@ const LandingPage = ({ onStartDemo }) => {
           </Grid>
         </Box>
 
-        {/* API Endpoints Section */}
         <Box sx={{ mb: 8 }}>
           <Typography variant="h3" gutterBottom align="center">
-            API Endpoints
+            {labels.apiEndpoints.title}
           </Typography>
-          <Typography variant="subtitle1" align="center" color="text.secondary" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
-            The Spanish Learning MCP server provides a comprehensive set of API endpoints for language learning applications.
+          <Typography variant="subtitle1" align="center" color="white" sx={{ mb: 4, maxWidth: 800, mx: 'auto' }}>
+            {labels.apiEndpoints.subtitle}
           </Typography>
           
-          <Paper elevation={2} sx={{ borderRadius: 4, overflow: 'hidden' }}>
-            {/* MCP Protocol Endpoints */}
-            <Box 
-              sx={{ 
-                p: 2, 
-                bgcolor: 'primary.main', 
-                color: 'primary.contrastText',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => toggleSection('mcp')}
-            >
-              <Api sx={{ mr: 1 }} />
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                MCP Protocol Endpoints
-              </Typography>
-              {expandedSection === 'mcp' ? <ExpandLess /> : <ExpandMore />}
-            </Box>
-            {expandedSection === 'mcp' && (
-              <Box sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        GET /mcp/models
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Lists available models and their capabilities
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /mcp/context
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Manipulates context for AI interactions
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /mcp/generate
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Generates text with provided context
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                <Box 
+                  sx={{ 
+                    p: 2, 
+                    bgcolor: 'primary.main', 
+                    color: 'primary.contrastText',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => toggleSection('mcp')}
+                >
+                  <Api sx={{ mr: 1 }} />
+                  <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+                    {labels.landingPage.apiEndpoints.sections.mcp.title}
+                  </Typography>
+                  {expandedSection === 'mcp' ? <ExpandLess /> : <ExpandMore />}
+                </Box>
+                {expandedSection === 'mcp' && (
+                  <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Typography variant="h6" color="primary" gutterBottom>
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.models.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.models.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Typography variant="h6" color="primary" gutterBottom>
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.context.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.context.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Typography variant="h6" color="primary" gutterBottom>
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.generate.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.generate.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
             
-            {/* Spanish Learning Endpoints */}
-            <Box 
-              sx={{ 
-                p: 2, 
-                bgcolor: 'secondary.main', 
-                color: 'secondary.contrastText',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => toggleSection('spanish')}
-            >
-              <Translate sx={{ mr: 1 }} />
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                Spanish Learning Endpoints
-              </Typography>
-              {expandedSection === 'spanish' ? <ExpandLess /> : <ExpandMore />}
-            </Box>
-            {expandedSection === 'spanish' && (
-              <Box sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /api/translate
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Translates text between English and Spanish
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /api/conjugate
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Provides verb conjugations in different tenses
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /api/query
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        General query endpoint for Spanish learning questions
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
-            
-            {/* Session Management Endpoints */}
-            <Box 
-              sx={{ 
-                p: 2, 
-                bgcolor: theme.palette.success.main, 
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => toggleSection('session')}
-            >
-              <School sx={{ mr: 1 }} />
-              <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                Session Management Endpoints
-              </Typography>
-              {expandedSection === 'session' ? <ExpandLess /> : <ExpandMore />}
-            </Box>
-            {expandedSection === 'session' && (
-              <Box sx={{ p: 3 }}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /api/session/start
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Starts a new learning session
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                        POST /api/session/end
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Ends an active learning session
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </Box>
-            )}
-          </Paper>
-        </Box>
-
-        {/* CTA Section */}
-        <Box sx={{ textAlign: 'center', mt: 8 }}>
-          <Typography variant="h4" gutterBottom>
-            Ready to explore the Spanish Learning MCP?
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
-            Try our interactive demo to see how the Model Context Protocol enhances Spanish language learning.
-          </Typography>
-          <Button 
-            variant="contained" 
-            color="primary" 
-            size="large"
-            onClick={onStartDemo}
-            endIcon={<ArrowForward />}
-            sx={{ px: 4, py: 1.5 }}
-          >
-            Start the Demo
-          </Button>
+            <Grid item xs={12}>
+              <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                <Box 
+                  sx={{ 
+                    p: 2, 
+                    bgcolor: 'secondary.main', 
+                    color: 'secondary.contrastText',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => toggleSection('spanish')}
+                >
+                  <Translate sx={{ mr: 1 }} />
+                  <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
+                    {labels.landingPage.apiEndpoints.sections.spanish.title}
+                  </Typography>
+                  {expandedSection === 'spanish' ? <ExpandLess /> : <ExpandMore />}
+                </Box>
+                {expandedSection === 'spanish' && (
+                  <Box sx={{ p: 3, bgcolor: 'background.paper' }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Typography variant="h6" color="secondary" gutterBottom>
+                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.translate.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.translate.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Typography variant="h6" color="secondary" gutterBottom>
+                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.conjugate.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.conjugate.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
         </Box>
       </Container>
     </Box>

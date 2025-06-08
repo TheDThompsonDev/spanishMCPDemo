@@ -10,19 +10,14 @@ import {
   StepContent,
   Card,
   CardContent,
-  Divider,
   Chip,
-  IconButton,
-  CircularProgress,
   Collapse,
   Fade,
-  Zoom,
   useTheme,
 } from '@mui/material';
 import {
   Send,
   Refresh,
-  Code,
   PlayArrow,
   Pause,
   SkipNext,
@@ -32,108 +27,39 @@ import {
   ArrowForward,
   Check,
 } from '@mui/icons-material';
+import { labels } from '../labels';
 
 const McpFlowVisualizer = () => {
   const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showCode, setShowCode] = useState(true);
+  const [showCode, setShowCode] = useState(false);
   const [showExplanation, setShowExplanation] = useState(true);
   const playTimerRef = useRef(null);
-  
-  // Sample request and response data for visualization
-  const samplePrompt = "Translate to Spanish: I would like to order a coffee, please.";
-  
+
   const flowSteps = [
     {
-      title: "Client Request",
-      description: "The client sends a request to the MCP server with a prompt and optional parameters.",
-      request: {
-        endpoint: "/mcp/generate",
-        method: "POST",
-        body: {
-          prompt: samplePrompt,
-          context_type: "conversation",
-          model: "spanish-learning-model",
-          max_tokens: 100
-        }
-      },
-      response: null,
+      ...labels.mcpFlow.steps[0],
       icon: <Send color="primary" />,
       color: theme.palette.primary.main
     },
     {
-      title: "Context Retrieval",
-      description: "The MCP server retrieves or generates appropriate context based on the request parameters.",
-      request: {
-        endpoint: "/mcp/context",
-        method: "POST",
-        body: {
-          context_type: "conversation",
-          operation: "get",
-          categories: ["restaurant", "ordering"],
-          difficulty_level: "intermediate"
-        }
-      },
-      response: {
-        object: "context",
-        content: "# Spanish Restaurant Phrases\n\n## Ordering\n\n### coffee\n- **Translation:** café\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: Me gustaría un café, por favor.\n  English: I would like a coffee, please.\n\n- Spanish: ¿Puedo pedir un café?\n  English: Can I order a coffee?\n\n### order\n- **Translation:** pedir\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: Quiero pedir algo de beber.\n  English: I want to order something to drink.\n",
-        metadata: {
-          type: "conversation",
-          source: "spanish-learning-mcp",
-          token_count: 156,
-          categories: ["restaurant", "ordering"],
-          difficulty_level: "intermediate"
-        }
-      },
+      ...labels.mcpFlow.steps[1],
       icon: <Storage color="secondary" />,
       color: theme.palette.secondary.main
     },
     {
-      title: "AI Model Processing",
-      description: "The AI model processes the request with the provided context to generate a response.",
-      request: {
-        internal: true,
-        body: {
-          model: "claude-3-opus-20240229",
-          prompt: "<context># Spanish Restaurant Phrases\n\n## Ordering\n\n### coffee\n- **Translation:** café\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: Me gustaría un café, por favor.\n  English: I would like a coffee, please.\n\n- Spanish: ¿Puedo pedir un café?\n  English: Can I order a coffee?\n\n### order\n- **Translation:** pedir\n- **Difficulty:** beginner\n\n**Examples:**\n- Spanish: Quiero pedir algo de beber.\n  English: I want to order something to drink.</context>\n\nTranslate to Spanish: I would like to order a coffee, please.",
-          max_tokens: 100,
-          temperature: 0.7
-        }
-      },
-      response: {
-        internal: true,
-        completion: "Me gustaría pedir un café, por favor."
-      },
+      ...labels.mcpFlow.steps[2],
       icon: <Psychology style={{ color: theme.palette.info.main }} />,
       color: theme.palette.info.main
     },
     {
-      title: "Response Generation",
-      description: "The MCP server returns the AI-generated response to the client.",
-      request: null,
-      response: {
-        object: "generation",
-        model: "spanish-learning-model",
-        choices: [
-          {
-            text: "Me gustaría pedir un café, por favor.",
-            finish_reason: "stop"
-          }
-        ],
-        usage: {
-          prompt_tokens: 180,
-          completion_tokens: 8,
-          total_tokens: 188
-        },
-        session_id: "session_1234567890"
-      },
+      ...labels.mcpFlow.steps[3],
       icon: <Lightbulb style={{ color: theme.palette.success.main }} />,
       color: theme.palette.success.main
     }
   ];
 
-  // Auto-play functionality
   useEffect(() => {
     if (isPlaying) {
       playTimerRef.current = setInterval(() => {
@@ -141,11 +67,11 @@ const McpFlowVisualizer = () => {
           const nextStep = prevStep + 1;
           if (nextStep >= flowSteps.length) {
             setIsPlaying(false);
-            return 0; // Loop back to the beginning
+            return 0;
           }
           return nextStep;
         });
-      }, 3000); // Advance every 3 seconds
+      }, 3000);
     } else if (playTimerRef.current) {
       clearInterval(playTimerRef.current);
     }
@@ -173,7 +99,6 @@ const McpFlowVisualizer = () => {
     setIsPlaying(!isPlaying);
   };
 
-  // Format JSON for display
   const formatJson = (json) => {
     return JSON.stringify(json, null, 2);
   };
@@ -182,10 +107,10 @@ const McpFlowVisualizer = () => {
     <Paper elevation={2} sx={{ p: 3, borderRadius: 4, mb: 4 }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" gutterBottom>
-          MCP Flow Visualization
+          {labels.mcpFlow.title}
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          This interactive visualization demonstrates how the Model Context Protocol works in a Spanish learning application.
+          {labels.mcpFlow.subtitle}
         </Typography>
       </Box>
 
@@ -196,7 +121,7 @@ const McpFlowVisualizer = () => {
           onClick={togglePlayPause}
           sx={{ mr: 1 }}
         >
-          {isPlaying ? 'Pause' : 'Auto-Play'}
+          {isPlaying ? labels.mcpFlow.buttons.pause : labels.mcpFlow.buttons.play}
         </Button>
         <Button
           variant="outlined"
@@ -204,7 +129,7 @@ const McpFlowVisualizer = () => {
           onClick={handleNext}
           sx={{ mr: 1 }}
         >
-          Next Step
+          {labels.mcpFlow.buttons.next}
         </Button>
         <Button
           variant="outlined"
@@ -212,7 +137,7 @@ const McpFlowVisualizer = () => {
           onClick={handleReset}
           sx={{ mr: 1 }}
         >
-          Reset
+          {labels.mcpFlow.buttons.reset}
         </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button
@@ -221,14 +146,14 @@ const McpFlowVisualizer = () => {
           onClick={() => setShowCode(!showCode)}
           sx={{ mr: 1 }}
         >
-          {showCode ? 'Hide Code' : 'Show Code'}
+          {showCode ? labels.mcpFlow.buttons.hideCode : labels.mcpFlow.buttons.showCode}
         </Button>
         <Button
           variant={showExplanation ? 'contained' : 'outlined'}
           size="small"
           onClick={() => setShowExplanation(!showExplanation)}
         >
-          {showExplanation ? 'Hide Details' : 'Show Details'}
+          {showExplanation ? labels.mcpFlow.buttons.hideDetails : labels.mcpFlow.buttons.showDetails}
         </Button>
       </Box>
 
@@ -236,10 +161,10 @@ const McpFlowVisualizer = () => {
         <Card variant="outlined" sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }}>
           <CardContent>
             <Typography variant="subtitle2" gutterBottom>
-              Sample Prompt:
+              {labels.mcpFlow.labels.samplePrompt}
             </Typography>
             <Typography variant="h6">
-              "{samplePrompt}"
+              "{labels.mcpFlow.samplePrompt}"
             </Typography>
           </CardContent>
         </Card>
@@ -282,19 +207,18 @@ const McpFlowVisualizer = () => {
               </Collapse>
 
               <Collapse in={showCode}>
-                {/* Request */}
                 {step.request && (
                   <Fade in={true} timeout={500}>
                     <Box sx={{ mb: 2 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <Chip
-                          label={step.request.method || "INTERNAL"}
+                          label={step.request.method || labels.mcpFlow.labels.method}
                           size="small"
                           color="primary"
                           sx={{ mr: 1 }}
                         />
                         <Typography variant="subtitle2" color="text.secondary">
-                          {step.request.endpoint || "AI Model Processing"}
+                          {step.request.endpoint || labels.mcpFlow.labels.internalProcessing}
                         </Typography>
                       </Box>
                       <Paper
@@ -314,19 +238,18 @@ const McpFlowVisualizer = () => {
                   </Fade>
                 )}
 
-                {/* Response */}
                 {step.response && (
                   <Fade in={true} timeout={800}>
                     <Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                         <Chip
-                          label="RESPONSE"
+                          label={labels.mcpFlow.labels.response}
                           size="small"
                           color="success"
                           sx={{ mr: 1 }}
                         />
                         <Typography variant="subtitle2" color="text.secondary">
-                          {step.response.object || "Internal Processing"}
+                          {step.response.object || labels.mcpFlow.labels.internalProcessing}
                         </Typography>
                       </Box>
                       <Paper
@@ -358,14 +281,14 @@ const McpFlowVisualizer = () => {
                   sx={{ mr: 1 }}
                   endIcon={<ArrowForward />}
                 >
-                  {index === flowSteps.length - 1 ? 'Restart' : 'Next Step'}
+                  {index === flowSteps.length - 1 ? labels.mcpFlow.buttons.restart : labels.mcpFlow.buttons.next}
                 </Button>
                 <Button
                   variant="outlined"
                   onClick={handleBack}
                   sx={{ mr: 1 }}
                 >
-                  Previous
+                  {labels.mcpFlow.buttons.previous}
                 </Button>
               </Box>
             </StepContent>
