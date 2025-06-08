@@ -413,10 +413,10 @@ const LandingPage = ({ onStartDemo }) => {
                         <Card variant="outlined" sx={{ height: '100%' }}>
                           <CardContent>
                             <Typography variant="h6" color="primary" gutterBottom>
-                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.models.title}
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.resources.title}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.models.description}
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.resources.description}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -425,10 +425,10 @@ const LandingPage = ({ onStartDemo }) => {
                         <Card variant="outlined" sx={{ height: '100%' }}>
                           <CardContent>
                             <Typography variant="h6" color="primary" gutterBottom>
-                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.context.title}
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.resourceRead.title}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.context.description}
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.resourceRead.description}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -437,10 +437,10 @@ const LandingPage = ({ onStartDemo }) => {
                         <Card variant="outlined" sx={{ height: '100%' }}>
                           <CardContent>
                             <Typography variant="h6" color="primary" gutterBottom>
-                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.generate.title}
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.tools.title}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.generate.description}
+                              {labels.landingPage.apiEndpoints.sections.mcp.endpoints.tools.description}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -466,7 +466,7 @@ const LandingPage = ({ onStartDemo }) => {
                 >
                   <Translate sx={{ mr: 1 }} />
                   <Typography variant="subtitle1" sx={{ flexGrow: 1 }}>
-                    {labels.landingPage.apiEndpoints.sections.spanish.title}
+                    {labels.landingPage.apiEndpoints.sections.tools.title}
                   </Typography>
                   {expandedSection === 'spanish' ? <ExpandLess /> : <ExpandMore />}
                 </Box>
@@ -477,10 +477,10 @@ const LandingPage = ({ onStartDemo }) => {
                         <Card variant="outlined" sx={{ height: '100%' }}>
                           <CardContent>
                             <Typography variant="h6" color="secondary" gutterBottom>
-                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.translate.title}
+                              {labels.landingPage.apiEndpoints.sections.tools.endpoints.translator.title}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.translate.description}
+                              {labels.landingPage.apiEndpoints.sections.tools.endpoints.translator.description}
                             </Typography>
                           </CardContent>
                         </Card>
@@ -489,10 +489,22 @@ const LandingPage = ({ onStartDemo }) => {
                         <Card variant="outlined" sx={{ height: '100%' }}>
                           <CardContent>
                             <Typography variant="h6" color="secondary" gutterBottom>
-                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.conjugate.title}
+                              {labels.landingPage.apiEndpoints.sections.tools.endpoints.conjugator.title}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                              {labels.landingPage.apiEndpoints.sections.spanish.endpoints.conjugate.description}
+                              {labels.landingPage.apiEndpoints.sections.tools.endpoints.conjugator.description}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Card variant="outlined" sx={{ height: '100%' }}>
+                          <CardContent>
+                            <Typography variant="h6" color="secondary" gutterBottom>
+                              {labels.landingPage.apiEndpoints.sections.tools.endpoints.assessor.title}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {labels.landingPage.apiEndpoints.sections.tools.endpoints.assessor.description}
                             </Typography>
                           </CardContent>
                         </Card>

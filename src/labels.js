@@ -58,51 +58,61 @@ export const labels = {
   },
   mcpProtocolSteps: [
     {
-      label: "Client Request",
-      description: "Client sends a request to the MCP server with a prompt and optional parameters",
-      code: `POST /mcp/generate
+      label: "Resource Discovery",
+      description: "The MCP client discovers available learning resources from the server",
+      code: `POST /mcp/resources/list
 {
-  "prompt": "Translate to Spanish: Hello, how are you?",
-  "context_type": "vocabulary",
-  "model": "spanish-learning-model"
+  "method": "resources/list",
+  "params": {
+    "resourceType": "spanish-learning"
+  }
 }`
     },
     {
-      label: "Context Retrieval",
-      description: "MCP server retrieves or generates appropriate context based on the request",
-      code: `POST /mcp/context
+      label: "Resource Access",
+      description: "The MCP server provides specific learning resources based on the request",
+      code: `POST /mcp/resources/read
 {
-  "context_type": "vocabulary",
-  "operation": "get",
-  "categories": ["greeting"],
-  "difficulty_level": "beginner"
+  "method": "resources/read",
+  "params": {
+    "uri": "spanish://vocabulary/greetings",
+    "difficulty": "beginner"
+  }
 }`
     },
     {
-      label: "AI Model Processing",
-      description: "The AI model processes the request with the provided context",
-      code: `{
-  "model": "claude-3-opus-20240229",
-  "prompt": "<context>...</context>\\nTranslate to Spanish: Hello, how are you?",
-  "max_tokens": 1000
-}`
-    },
-    {
-      label: "Response Generation",
-      description: "MCP server returns the AI-generated response to the client",
-      code: `{
-  "object": "generation",
-  "model": "spanish-learning-model",
-  "choices": [
-    {
-      "text": "Hola, ¿cómo estás?",
-      "finish_reason": "stop"
+      label: "Tool Execution",
+      description: "The MCP server executes a translation tool with the provided context",
+      code: `POST /mcp/tools/call
+{
+  "method": "tools/call",
+  "params": {
+    "name": "spanish-translator",
+    "arguments": {
+      "text": "Hello, how are you?",
+      "targetLanguage": "spanish",
+      "context": "casual_greeting"
     }
-  ],
-  "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 7,
-    "total_tokens": 17
+  }
+}`
+    },
+    {
+      label: "Tool Response",
+      description: "The MCP server returns the tool execution result to the client",
+      code: `{
+  "method": "tools/call",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Hola, ¿cómo estás?"
+      }
+    ],
+    "metadata": {
+      "confidence": 0.95,
+      "difficulty": "beginner",
+      "alternatives": ["¿Cómo te va?"]
+    }
   }
 }`
     }
@@ -548,30 +558,51 @@ export const labels = {
         mcp: {
           title: "MCP Protocol Endpoints",
           endpoints: {
-            models: {
-              title: "GET /mcp/models",
-              description: "List available models and their capabilities"
+            resources: {
+              title: "POST /mcp/resources/list",
+              description: "Lists available learning resources including vocabulary, grammar, and exercises."
             },
-            context: {
-              title: "POST /mcp/context",
-              description: "Retrieve or manipulate context for AI interactions"
+            resourceRead: {
+              title: "POST /mcp/resources/read",
+              description: "Reads specific learning resources with contextual metadata."
             },
-            generate: {
-              title: "POST /mcp/generate",
-              description: "Generate text using the AI model with context"
+            tools: {
+              title: "POST /mcp/tools/call",
+              description: "Executes learning tools like translation and conjugation with context."
             }
           }
         },
-        spanish: {
-          title: "Spanish Learning API Endpoints",
+        tools: {
+          title: "MCP Learning Tools",
           endpoints: {
-            translate: {
-              title: "POST /api/translate",
-              description: "Translate text between English and Spanish"
+            translator: {
+              title: "spanish-translator",
+              description: "Context-aware translation tool between English and Spanish."
             },
-            conjugate: {
-              title: "POST /api/conjugate",
-              description: "Conjugate Spanish verbs in different tenses"
+            conjugator: {
+              title: "verb-conjugator",
+              description: "Comprehensive Spanish verb conjugation with contextual examples."
+            },
+            assessor: {
+              title: "skill-assessor",
+              description: "Skill assessment tool with personalized learning recommendations."
+            }
+          }
+        },
+        session: {
+          title: "Session Management Endpoints",
+          endpoints: {
+            start: {
+              title: "POST /api/session/start",
+              description: "Starts a new learning session with specified type and lesson parameters."
+            },
+            end: {
+              title: "POST /api/session/end",
+              description: "Ends an active learning session and saves progress data."
+            },
+            progress: {
+              title: "GET /api/progress",
+              description: "Retrieves detailed learning progress and analytics for the user."
             }
           }
         }

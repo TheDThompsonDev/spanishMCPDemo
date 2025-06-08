@@ -39,35 +39,67 @@ The Model Context Protocol (MCP) is a standardized way for applications to inter
 
 ## 🏗️ Architecture
 
-### MCP Server Implementation
-The server implements the full MCP specification with:
+### MCP Host-Client-Server Architecture
+The MCP defines a three-component architecture enabling secure AI interactions between:
+
+1. **MCP Host**: The AI application managing client-server interactions, context, and AI requests.
+   - Manages connections and coordinates context between servers.
+   - Handles authentication and processes AI model requests.
+
+2. **MCP Client**: The user interface initiating requests and displaying responses.
+   - Provides user-facing interfaces and manages user sessions.
+
+3. **MCP Server**: The resource provider delivering context and data assets to the host.
+   - Offers learning resources, contextual data, and domain-specific logic.
 
 ```
-📁 MCP Protocol Endpoints
-├── GET  /mcp/models          # List available models and capabilities
-├── POST /mcp/context         # Context manipulation (get, add, update)
-└── POST /mcp/generate        # Generate text with provided context
+📁 MCP Protocol Endpoints (Standard)
+├── POST /mcp/resources/list  # List available learning resources
+├── POST /mcp/resources/read  # Read specific resources like vocabulary
+├── POST /mcp/tools/list      # List available tools such as translation
+├── POST /mcp/tools/call      # Execute tools with context
+└── POST /mcp/prompts/list    # List system prompts
 
-📁 Spanish Learning API
-├── POST /api/translate       # English ↔ Spanish translation
-├── POST /api/conjugate       # Verb conjugation
-├── POST /api/query          # General Spanish learning queries
-├── POST /api/session/start  # Start learning session
-├── POST /api/session/end    # End learning session
-├── GET  /api/session/:id    # Get session details
-└── GET  /api/progress       # User progress tracking
+📁 Learning Tools (via MCP Tools)
+├── spanish-translator        # Context-aware translation
+├── verb-conjugator           # Comprehensive verb conjugation
+└── skill-assessor            # Proficiency assessment with recommendations
 ```
 
-### Context Types
-The MCP server supports multiple context types:
+### MCP Architecture Components
 
-- **`vocabulary`**: Spanish vocabulary with translations and examples
+#### 🏠 **MCP Host** (AI Application)
+The central coordinator managing all MCP interactions:
+- **Connection Management**: Establishes and maintains connections to MCP servers
+- **Context Coordination**: Aggregates context from multiple servers
+- **AI Model Integration**: Passes enriched context to AI models (Claude, GPT, etc.)
+- **Authentication & Security**: Manages secure server connections
+- **Request Routing**: Routes requests to appropriate servers
+
+#### 💻 **MCP Client** (User Interface)
+The user-facing application initiating learning requests:
+- **User Interface**: Provides interactive Spanish learning interface
+- **Session Management**: Tracks user learning sessions and progress
+- **Request Initiation**: Sends learning requests to the MCP host
+- **Response Presentation**: Displays AI responses and learning content
+
+#### 🗄️ **MCP Server** (Resource Provider)
+The specialized Spanish learning resource provider:
+- **Resource Management**: Maintains vocabulary, grammar, and learning content
+- **Tool Implementation**: Provides translation, conjugation, and assessment tools
+- **Context Generation**: Creates personalized learning context
+- **Metadata Provision**: Supplies rich contextual information
+
+### Learning Resources & Tools
+The MCP server provides structured access to:
+
+- **`vocabulary`**: Spanish vocabulary with translations, examples, and difficulty levels
 - **`grammar`**: Grammar rules, verb conjugations, and usage patterns
 - **`conversation`**: Common phrases and conversational patterns
-- **`mixed`**: Combined vocabulary and grammar context
-- **`exercise`**: Practice exercises and learning activities
-- **`assessment`**: Skill assessment and evaluation content
-- **`personalized`**: User-specific content based on learning progress
+- **`assessment`**: Skill evaluation and personalized recommendations
+- **`exercise`**: Interactive practice exercises and activities
+- **`cultural`**: Cultural context and regional variations
+- **`personalized`**: Adaptive content based on user progress and preferences
 
 ## 🚀 Quick Start
 
@@ -114,45 +146,64 @@ Backend API at `http://localhost:3001`
 
 ## 🔄 MCP Flow Demonstration
 
-The demo showcases the complete MCP flow:
+The demo showcases the complete MCP standard flow:
 
-### 1. Client Request
+### 1. Resource Discovery
 ```javascript
-POST /mcp/generate
+POST /mcp/resources/list
 {
-  "prompt": "Translate to Spanish: Hello, how are you?",
-  "context_type": "vocabulary",
-  "model": "spanish-learning-model"
+  "method": "resources/list",
+  "params": {
+    "resourceType": "spanish-learning"
+  }
 }
 ```
 
-### 2. Context Retrieval
+### 2. Resource Access
 ```javascript
-POST /mcp/context
+POST /mcp/resources/read
 {
-  "context_type": "vocabulary",
-  "operation": "get",
-  "categories": ["greeting"],
-  "difficulty_level": "beginner"
+  "method": "resources/read",
+  "params": {
+    "uri": "spanish://vocabulary/greetings",
+    "difficulty": "beginner"
+  }
 }
 ```
 
-### 3. AI Model Processing
-The server processes the request with retrieved context, enhancing the AI model's understanding of Spanish vocabulary and appropriate translations.
+### 3. Tool Execution
+```javascript
+POST /mcp/tools/call
+{
+  "method": "tools/call",
+  "params": {
+    "name": "spanish-translator",
+    "arguments": {
+      "text": "Hello, how are you?",
+      "targetLanguage": "spanish",
+      "context": "casual_greeting"
+    }
+  }
+}
+```
 
-### 4. Response Generation
+### 4. Tool Response
 ```javascript
 {
-  "object": "generation",
-  "model": "spanish-learning-model",
-  "choices": [{
-    "text": "Hola, ¿cómo estás?",
-    "finish_reason": "stop"
-  }],
-  "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 7,
-    "total_tokens": 17
+  "method": "tools/call",
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Hola, ¿cómo estás?"
+      }
+    ],
+    "metadata": {
+      "confidence": 0.95,
+      "difficulty": "beginner",
+      "alternatives": ["¿Cómo te va?"],
+      "learning_note": "Casual greeting appropriate for friends"
+    }
   }
 }
 ```
