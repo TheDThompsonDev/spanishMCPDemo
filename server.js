@@ -4,12 +4,10 @@ const cors = require('cors');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 
-// Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-// Check if API key is available
 const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
 if (hasAnthropicKey) {
   console.log('✅ Anthropic API key found - Real AI translations enabled');
@@ -26,7 +24,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'build')));
 
-// Comprehensive Spanish learning data following MCP best practices
 const vocabularyData = {
   greeting: [
     {
@@ -392,7 +389,6 @@ const grammarData = {
   ]
 };
 
-// Helper function to generate context content
 function generateContextContent(contextType, categories = [], difficultyLevel = 'beginner', maxItems = 5) {
   let content = `# Spanish ${contextType.charAt(0).toUpperCase() + contextType.slice(1)} Reference\n\n`;
   
@@ -412,7 +408,6 @@ function generateContextContent(contextType, categories = [], difficultyLevel = 
           content += `- **Translation:** ${item.translation}\n`;
           content += `- **Difficulty:** ${item.difficulty}\n`;
           
-          // Handle enhanced data structure
           if (item.pronunciation) {
             content += `- **Pronunciation:** ${item.pronunciation}\n`;
           }
@@ -425,7 +420,6 @@ function generateContextContent(contextType, categories = [], difficultyLevel = 
           
           content += `\n**Examples:**\n`;
           item.examples.forEach(example => {
-            // Handle both old string format and new object format
             if (typeof example === 'string') {
               content += `- ${example}\n`;
             } else if (example && example.spanish && example.english) {
@@ -441,7 +435,6 @@ function generateContextContent(contextType, categories = [], difficultyLevel = 
             }
           });
           
-          // Add additional enhanced information
           if (item.cultural_notes) {
             content += `**Cultural Notes:** ${item.cultural_notes}\n\n`;
           }
@@ -508,7 +501,6 @@ function generateContextContent(contextType, categories = [], difficultyLevel = 
             }
           });
           
-          // Add additional grammar information
           if (item.common_mistakes && item.common_mistakes.length > 0) {
             content += `**Common Mistakes:**\n`;
             item.common_mistakes.forEach(mistake => {
@@ -543,8 +535,7 @@ function generateContextContent(contextType, categories = [], difficultyLevel = 
 }
 
 // MCP Protocol Endpoints
-
-// GET /mcp/models - List available models
+// List available models
 app.get('/mcp/models', (req, res) => {
   res.json({
     object: "model_list",
@@ -568,7 +559,7 @@ app.get('/mcp/models', (req, res) => {
   });
 });
 
-// POST /mcp/context - Context manipulation
+//Context manipulation
 app.post('/mcp/context', (req, res) => {
   const { 
     context_type = 'mixed', 
@@ -579,8 +570,6 @@ app.post('/mcp/context', (req, res) => {
   } = req.body;
   
   const content = generateContextContent(context_type, categories, difficulty_level, max_items);
-  
-  // Simulate some processing time
   setTimeout(() => {
     res.json({
       object: "context",
@@ -597,19 +586,15 @@ app.post('/mcp/context', (req, res) => {
   }, Math.random() * 500 + 200); // 200-700ms delay
 });
 
-// POST /mcp/generate - Generate text with context using Claude AI
+//Generate text with context using Claude AI
 app.post('/mcp/generate', async (req, res) => {
   const { prompt, context_type = 'mixed', model = 'spanish-learning-model' } = req.body;
   
   let generatedText = prompt;
   let aiGenerated = false;
-  
-  // Try Claude AI first if available
   if (hasAnthropicKey) {
     try {
       console.log(`🤖 Using Claude AI for MCP generation: "${prompt}"`);
-      
-      // Generate context for better responses
       const contextContent = generateContextContent(context_type, [], 'beginner', 5);
       
       const systemPrompt = `You are an expert Spanish language teacher and AI assistant specialized in Spanish learning. You help users with translations, grammar explanations, vocabulary, and language learning guidance.
@@ -644,11 +629,9 @@ Guidelines:
       
     } catch (error) {
       console.error('❌ Claude API error:', error.message);
-      // Fall back to simple translation logic
     }
   }
   
-  // Fallback logic if Claude AI failed or unavailable
   if (!aiGenerated) {
     console.log(`📝 Using fallback generation for: "${prompt}"`);
     
@@ -670,8 +653,6 @@ Guidelines:
       generatedText = translations[textToTranslate.toLowerCase()] || `[Translation of: ${textToTranslate}]`;
     }
   }
-  
-  // Simulate processing time
   const delay = aiGenerated ? Math.random() * 2000 + 1000 : Math.random() * 1000 + 500;
   
   setTimeout(() => {
@@ -696,12 +677,9 @@ Guidelines:
 });
 
 // Spanish Learning API Endpoints
-
-// POST /api/translate - Real AI Translation with Claude
+// Real AI Translation with Claude
 app.post('/api/translate', async (req, res) => {
   const { text, targetLanguage, userId, sessionId, contextType = 'mixed' } = req.body;
-  
-  // Fallback translations for when API is unavailable
   const fallbackTranslations = {
     spanish: {
       'hello': 'hola',
@@ -729,13 +707,9 @@ app.post('/api/translate', async (req, res) => {
   
   let translatedText = null;
   let aiGenerated = false;
-  
-  // Try Claude AI first if API key is available
   if (hasAnthropicKey) {
     try {
       console.log(`🤖 Using Claude AI for translation: "${text}" -> ${targetLanguage}`);
-      
-      // Generate context for better translation
       const contextContent = generateContextContent(contextType, [], 'beginner', 3);
       
       const systemPrompt = `You are an expert Spanish language teacher and translator. Your task is to provide accurate, natural translations between English and Spanish.
@@ -772,18 +746,15 @@ Guidelines:
       
     } catch (error) {
       console.error('❌ Claude API error:', error.message);
-      // Fall back to mock data
     }
   }
   
-  // Fallback to mock translations if Claude failed or no API key
   if (!translatedText) {
     console.log(`📝 Using fallback translation for: "${text}"`);
     const targetTranslations = fallbackTranslations[targetLanguage] || {};
     translatedText = targetTranslations[text.toLowerCase()] || `[${targetLanguage === 'spanish' ? 'Spanish' : 'English'} translation of: ${text}]`;
   }
   
-  // Simulate processing time
   const delay = aiGenerated ? Math.random() * 2000 + 1000 : Math.random() * 800 + 300;
   
   setTimeout(() => {
@@ -801,7 +772,6 @@ Guidelines:
   }, delay);
 });
 
-// POST /api/conjugate
 app.post('/api/conjugate', (req, res) => {
   const { verb, tense, userId, sessionId } = req.body;
   
@@ -833,11 +803,9 @@ app.post('/api/conjugate', (req, res) => {
   }, Math.random() * 600 + 200);
 });
 
-// POST /api/query - Spanish Learning Q&A with Claude AI
+//Spanish Learning Q&A with Claude AI
 app.post('/api/query', async (req, res) => {
   const { query, contextType = 'mixed', userId, sessionId } = req.body;
-  
-  // Fallback responses for when API is unavailable
   const fallbackResponses = {
     'what is the difference between ser and estar': 'In Spanish, both "ser" and "estar" mean "to be" in English, but they are used in different contexts. "Ser" is used for permanent or inherent characteristics, while "estar" is used for temporary states or conditions.',
     'how do you conjugate regular ar verbs': 'Regular -ar verbs are conjugated by removing the -ar ending and adding: -o, -as, -a, -amos, -áis, -an for present tense.',
@@ -847,15 +815,10 @@ app.post('/api/query', async (req, res) => {
   
   let response = null;
   let aiGenerated = false;
-  
-  // Try Claude AI first if API key is available
   if (hasAnthropicKey) {
     try {
       console.log(`🤖 Using Claude AI for query: "${query}"`);
-      
-      // Generate context for better responses
       const contextContent = generateContextContent(contextType, [], 'beginner', 5);
-      
       const systemPrompt = `You are an expert Spanish language teacher. Answer questions about Spanish language learning, grammar, vocabulary, culture, and usage. Provide clear, educational responses that help students learn.
 
 Learning Context:
@@ -888,17 +851,12 @@ Guidelines:
       
     } catch (error) {
       console.error('❌ Claude API error:', error.message);
-      // Fall back to mock responses
     }
   }
-  
-  // Fallback to mock responses if Claude failed or no API key
   if (!response) {
     console.log(`📝 Using fallback response for query: "${query}"`);
     response = fallbackResponses[query.toLowerCase()] || 'I\'m sorry, I don\'t have specific information about that topic. Try asking about Spanish grammar, vocabulary, or common phrases.';
   }
-  
-  // Simulate processing time
   const delay = aiGenerated ? Math.random() * 2000 + 1000 : Math.random() * 1200 + 400;
   
   setTimeout(() => {
@@ -914,12 +872,7 @@ Guidelines:
   }, delay);
 });
 
-// Session Management Endpoints
-
-// In-memory session storage for demo
 const sessions = new Map();
-
-// POST /api/session/start
 app.post('/api/session/start', (req, res) => {
   const { type, lessonId } = req.body;
   const userId = req.headers['user-id'];
@@ -947,8 +900,6 @@ app.post('/api/session/start', (req, res) => {
     });
   }, 200);
 });
-
-// POST /api/session/end
 app.post('/api/session/end', (req, res) => {
   const { sessionId } = req.body;
   const userId = req.headers['user-id'];
@@ -959,7 +910,6 @@ app.post('/api/session/end', (req, res) => {
     session.endTime = new Date().toISOString();
     session.status = 'completed';
     
-    // Calculate a demo score
     const score = Math.round(Math.random() * 30 + 70); // 70-100
     session.score = score;
     
@@ -976,7 +926,6 @@ app.post('/api/session/end', (req, res) => {
   }
 });
 
-// GET /api/session/:sessionId
 app.get('/api/session/:sessionId', (req, res) => {
   const { sessionId } = req.params;
   const userId = req.headers['user-id'];
@@ -990,11 +939,9 @@ app.get('/api/session/:sessionId', (req, res) => {
   }
 });
 
-// GET /api/progress - User progress tracking
 app.get('/api/progress', (req, res) => {
   const userId = req.headers['user-id'];
-  
-  // Mock progress data
+
   const progress = {
     level: "intermediate",
     vocabularyMastered: Math.floor(Math.random() * 50) + 100,
@@ -1018,7 +965,6 @@ app.get('/api/progress', (req, res) => {
   }, Math.random() * 800 + 500);
 });
 
-// Serve React app for all other routes
 app.get('*', (req, res) => {
   const indexPath = path.join(__dirname, 'build', 'index.html');
   console.log('Serving index.html from:', indexPath);
@@ -1030,7 +976,6 @@ app.get('*', (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((error, req, res, next) => {
   console.error('Server error:', error);
   res.status(500).json({ 
@@ -1051,7 +996,6 @@ app.listen(PORT, (err) => {
   console.log(`📁 Serving static files from: ${path.join(__dirname, 'build')}`);
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
   process.exit(1);
