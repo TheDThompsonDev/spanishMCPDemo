@@ -194,10 +194,18 @@ const ContextVisualizer = ({ userId, sessionId }) => {
           {labels.contextVisualizer.labels.headerDescription}
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-          <Chip label={labels.contextVisualizer.labels.badges.dynamicContent} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
-          <Chip label={labels.contextVisualizer.labels.badges.contextAware} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
-          <Chip label={labels.contextVisualizer.labels.badges.realTime} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
-          <Chip label={labels.contextVisualizer.labels.badges.configurable} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          {labels?.contextVisualizer?.labels?.badges?.dynamicContent && (
+            <Chip label={labels.contextVisualizer.labels.badges.dynamicContent} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          )}
+          {labels?.contextVisualizer?.labels?.badges?.contextAware && (
+            <Chip label={labels.contextVisualizer.labels.badges.contextAware} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          )}
+          {labels?.contextVisualizer?.labels?.badges?.realTime && (
+            <Chip label={labels.contextVisualizer.labels.badges.realTime} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          )}
+          {labels?.contextVisualizer?.labels?.badges?.configurable && (
+            <Chip label={labels.contextVisualizer.labels.badges.configurable} size="small" variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }} />
+          )}
         </Box>
       </Paper>
 
